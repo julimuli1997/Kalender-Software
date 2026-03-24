@@ -1,0 +1,32 @@
+.app-header {
+  background-color: var(--surface);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.app-header .logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--on-surface);
+  text-decoration: none;
+}
+
+.app-header nav a {
+  margin-left: 1.5rem;
+  color: var(--text-color-muted);
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.2s ease;
+}
+
+.app-header nav a:hover {
+  color: var(--on-surface);
+}
+
+.app-header nav a.active {
+  color: var(--primary);
+  font-weight: 500;
+}
