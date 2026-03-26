@@ -30,23 +30,26 @@ function KalenderPage() {
 
         fetchEvents();
 
-        // Optional: Add auto-refresh for TV view
-        const intervalId = setInterval(fetchEvents, 60000); // Refresh every 60 seconds
+        // Aktualisiert die Anzeige alle 60 Sekunden automatisch
+        const intervalId = setInterval(fetchEvents, 60000); 
 
-        return () => clearInterval(intervalId); // Cleanup on unmount
+        return () => clearInterval(intervalId);
     }, []);
 
     return (
         <div>
             <h2>Kalender-Ansicht (TV)</h2>
-            <div style={{ height: '80vh' }}>
+            <div style={{ height: '80vh', minHeight: '600px' }}>
                 <Calendar
                     localizer={localizer}
                     events={events}
                     startAccessor="start"
                     endAccessor="end"
                     style={{ height: '100%' }}
-                    toolbar={false} // Hide the toolbar for a cleaner look
+                    toolbar={false} // Versteckt die Buttons, da es ein reiner Anzeige-Monitor ist
+                    defaultView="day" // TV-Ansicht startet oft am besten in der Tagesansicht
+                    step={15}
+                    timeslots={4}
                     messages={{
                       next: "Nächster",
                       previous: "Zurück",
