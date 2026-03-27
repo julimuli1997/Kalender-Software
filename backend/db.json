@@ -1,62 +1,47 @@
 [
     {
-        "id": 1774344430662,
-        "title": "Beispiel Termin für diese Woche",
-        "start": "2026-03-03T23:00:00.000Z",
-        "end": "2026-03-07T23:00:00.000Z"
+        "id": "1774597992694",
+        "title": "zu Frau Klees",
+        "start": "2026-03-27T07:30:00+01:00",
+        "end": "2026-03-27T10:00:00+01:00",
+        "allDay": false,
+        "mitarbeiter_id": "m3",
+        "auto_id": "a3"
     },
     {
-        "id": 1774344624911,
-        "title": "jap",
-        "start": "2026-03-03T23:00:00.000Z",
-        "end": "2026-03-06T23:00:00.000Z"
+        "id": "1774598042761",
+        "title": "zu Peter mainfad",
+        "start": "2026-03-27T07:30:00+01:00",
+        "end": "2026-03-27T11:30:00+01:00",
+        "allDay": false,
+        "mitarbeiter_id": "m2",
+        "auto_id": "a3"
     },
     {
-        "id": 1774533008535,
-        "title": "test",
-        "start": "2026-03-09T23:00:00.000Z",
-        "end": "2026-03-13T23:00:00.000Z"
+        "id": "1774604918401",
+        "title": "Frau Daum bettliegerich",
+        "start": "2026-04-01",
+        "end": "2026-04-04",
+        "allDay": true,
+        "mitarbeiter_id": "m2",
+        "auto_id": "a3"
     },
     {
-        "id": "1774539569720",
-        "title": "beispiel",
-        "start": "2026-03-26T07:30:00+01:00",
-        "end": "2026-03-26T12:00:00+01:00",
-        "allDay": false
+        "id": "1774613521288",
+        "title": "Viktor zu Rhein",
+        "start": "2026-09-02T06:00:00+02:00",
+        "end": "2026-09-02T09:00:00+02:00",
+        "allDay": false,
+        "mitarbeiter_id": "1774613506220",
+        "auto_id": "a2"
     },
     {
-        "id": "1774539996091",
-        "title": "neuer termin",
-        "start": "2026-03-26T06:30:00+01:00",
-        "end": "2026-03-26T14:00:00+01:00",
-        "allDay": false
-    },
-    {
-        "id": "1774540145001",
-        "title": "fhsad",
-        "start": "2026-03-26T06:30:00+01:00",
-        "end": "2026-03-26T15:00:00+01:00",
-        "allDay": false
-    },
-    {
-        "id": "1774540153447",
-        "title": "fjsladf",
-        "start": "2026-03-26T06:30:00+01:00",
-        "end": "2026-03-26T15:30:00+01:00",
-        "allDay": false
-    },
-    {
-        "id": "1774540165755",
-        "title": "fhjsakdfas",
-        "start": "2026-03-26T05:00:00+01:00",
-        "end": "2026-03-26T18:30:00+01:00",
-        "allDay": false
-    },
-    {
-        "id": "1774540185008",
-        "title": "hurensohn",
-        "start": "2026-03-26T03:00:00+01:00",
-        "end": "2026-03-26T19:00:00+01:00",
-        "allDay": false
+        "id": "1774613598521",
+        "title": "kgu",
+        "start": "2026-03-27T06:30:00+01:00",
+        "end": "2026-03-27T12:00:00+01:00",
+        "allDay": false,
+        "mitarbeiter_id": "",
+        "auto_id": ""
     }
 ]

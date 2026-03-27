@@ -4,230 +4,261 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import deLocale from '@fullcalendar/core/locales/de';
+import './Calendar.css';
 
-const API_URL = 'http://localhost:8000/api/termine';
+const API_URL = 'http://localhost:8000/api';
 
-// --- NEU: Farbpalette für überlappende Termine ---
-const colorPalette = [
-  'var(--primary)', // Dein Standard-Blau
-  '#28a745',        // Grün
-  '#f39c12',        // Orange
-  '#dc3545',        // Rot
-  '#17a2b8',        // Türkis
-  '#6f42c1'         // Lila
-];
+// Farbpalette für überlappende Termine
+const colorPalette = ['var(--primary)', '#28a745', '#f39c12', '#dc3545', '#17a2b8', '#6f42c1'];
 
-// --- NEU: Funktion, die Überlappungen erkennt und Farben verteilt ---
+// Funktion zur automatischen Farbzuweisung bei Überschneidungen
 const assignColors = (rawEvents) => {
-  // 1. Termine nach Startzeit sortieren
   const sorted = [...rawEvents].sort((a, b) => new Date(a.start) - new Date(b.start));
   const coloredEvents = [];
-
   sorted.forEach(event => {
-    // 2. Prüfen, welche bereits gefärbten Termine sich mit diesem überschneiden
     const overlapping = coloredEvents.filter(e => {
       const startA = new Date(event.start);
       const endA = new Date(event.end || event.start);
       const startB = new Date(e.start);
       const endB = new Date(e.end || e.start);
-      return startB < endA && endB > startA; // Logik für zeitliche Überschneidung
+      return startB < endA && endB > startA; 
     });
-
-    // 3. Schauen, welche Farben von den Nachbarn schon belegt sind
     const usedColors = overlapping.map(e => e.backgroundColor);
-
-    // 4. Erste freie Farbe aus der Palette nehmen (oder Standard-Blau, falls alle belegt)
     const availableColor = colorPalette.find(color => !usedColors.includes(color)) || colorPalette[0];
-
-    // 5. Dem Termin die Farbe zuweisen
-    coloredEvents.push({
-      ...event,
-      backgroundColor: availableColor,
-      borderColor: availableColor
-    });
+    coloredEvents.push({ ...event, backgroundColor: availableColor, borderColor: availableColor });
   });
-
   return coloredEvents;
 };
 
 function AdminPage() {
   const [events, setEvents] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [mitarbeiter, setMitarbeiter] = useState([]);
+  const [autos, setAutos] = useState([]);
+  
+  // Modals Steuerung
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  
+  // Daten-States
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [newTerminTimes, setNewTerminTimes] = useState({ start: '', end: '', allDay: false });
+  const [formData, setFormData] = useState({ title: '', mitarbeiter_id: '', auto_id: '' });
 
+  // Initiales Laden der Daten
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-        // Farben direkt beim Laden berechnen
-        setEvents(assignColors(data));
+        const [termineRes, mitarbeiterRes, autosRes] = await Promise.all([
+          fetch(`${API_URL}/termine`),
+          fetch(`${API_URL}/mitarbeiter`),
+          fetch(`${API_URL}/autos`)
+        ]);
+        setEvents(assignColors(await termineRes.json()));
+        setMitarbeiter(await mitarbeiterRes.json());
+        setAutos(await autosRes.json());
       } catch (error) {
         console.error('Fehler beim Laden:', error);
       }
     };
-    fetchEvents();
+    fetchData();
   }, []);
 
-  const handleDateSelect = async (selectInfo) => {
-    const title = window.prompt('Neuer Termin Titel:');
-    const calendarApi = selectInfo.view.calendar;
-    calendarApi.unselect(); 
+  // --- FUNKTIONEN FÜR MITARBEITER & AUTOS ---
+  const addItem = async (type) => {
+    const label = type === 'mitarbeiter' ? 'Mitarbeiter Name' : 'Fahrzeug Name';
+    const name = window.prompt(`${label} hinzufügen:`);
+    if (!name) return;
 
-    if (title) {
-      const newEvent = {
-        id: new Date().getTime().toString(),
-        title,
-        start: selectInfo.startStr,
-        end: selectInfo.endStr,
-        allDay: selectInfo.allDay
-      };
-
-      try {
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newEvent),
-        });
-        if (response.ok) {
-          // Farben neu berechnen, wenn ein neuer Termin dazu kommt
-          setEvents(prev => assignColors([...prev, newEvent]));
-        }
-      } catch (error) {
-        console.error('Fehler beim Speichern:', error);
+    const newItem = { id: Date.now().toString(), name };
+    try {
+      const res = await fetch(`${API_URL}/${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newItem)
+      });
+      if (res.ok) {
+        if (type === 'mitarbeiter') setMitarbeiter([...mitarbeiter, newItem]);
+        else setAutos([...autos, newItem]);
       }
+    } catch (e) { console.error(e); }
+  };
+
+  const deleteItem = async (type, id) => {
+    if (!window.confirm("Eintrag wirklich löschen?")) return;
+    try {
+      const res = await fetch(`${API_URL}/${type}/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        if (type === 'mitarbeiter') setMitarbeiter(mitarbeiter.filter(m => m.id !== id));
+        else setAutos(autos.filter(a => a.id !== id));
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  // --- TERMIN FUNKTIONEN ---
+  const handleDateSelect = (selectInfo) => {
+    setNewTerminTimes({ start: selectInfo.startStr, end: selectInfo.endStr, allDay: selectInfo.allDay });
+    setFormData({ title: '', mitarbeiter_id: '', auto_id: '' });
+    setIsCreateModalOpen(true);
+    selectInfo.view.calendar.unselect();
+  };
+
+  const handleCreateSubmit = async (e) => {
+    e.preventDefault();
+    const newEvent = {
+      id: Date.now().toString(),
+      ...formData,
+      ...newTerminTimes
+    };
+
+    const res = await fetch(`${API_URL}/termine`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newEvent)
+    });
+
+    if (res.ok) {
+      setEvents(prev => assignColors([...prev, newEvent]));
+      setIsCreateModalOpen(false);
     }
   };
 
   const handleEventClick = (clickInfo) => {
     setSelectedEvent(clickInfo.event);
-    setIsModalOpen(true);
+    setIsDetailModalOpen(true);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedEvent(null);
-  };
-
-  const handleDelete = async () => {
-    if (!selectedEvent) return;
-    try {
-      const response = await fetch(`${API_URL}/${selectedEvent.id}`, { method: 'DELETE' });
-      if (response.ok) {
-        const updatedEvents = events.filter(e => e.id !== selectedEvent.id);
-        setEvents(assignColors(updatedEvents)); // Farben neu anpassen, falls Lücken entstehen
-        closeModal();
-      }
-    } catch (error) {
-      console.error('Fehler beim Löschen:', error);
-    }
-  };
-
-  const handleEdit = async () => {
-    if (!selectedEvent) return;
-    const neuerTitel = window.prompt('Titel bearbeiten:', selectedEvent.title);
-    
-    if (neuerTitel && neuerTitel !== selectedEvent.title) {
-      const updatedEvent = {
-        id: selectedEvent.id,
-        title: neuerTitel,
-        start: selectedEvent.startStr,
-        end: selectedEvent.endStr || selectedEvent.startStr,
-        allDay: selectedEvent.allDay
-      };
-
-      try {
-        const response = await fetch(`${API_URL}/${selectedEvent.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedEvent),
-        });
-
-        if (response.ok) {
-          const updatedEvents = events.map(e => e.id === updatedEvent.id ? updatedEvent : e);
-          setEvents(assignColors(updatedEvents));
-          closeModal();
-        }
-      } catch (error) {
-        console.error('Fehler beim Bearbeiten:', error);
-      }
+  const handleDeleteEvent = async () => {
+    if (!window.confirm("Termin löschen?")) return;
+    const res = await fetch(`${API_URL}/termine/${selectedEvent.id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setEvents(prev => assignColors(prev.filter(e => e.id !== selectedEvent.id)));
+      setIsDetailModalOpen(false);
     }
   };
 
   const handleEventChange = async (changeInfo) => {
-    const updatedEvent = {
+    const updated = {
       id: changeInfo.event.id,
       title: changeInfo.event.title,
       start: changeInfo.event.startStr,
       end: changeInfo.event.endStr || changeInfo.event.startStr,
-      allDay: changeInfo.event.allDay
+      allDay: changeInfo.event.allDay,
+      mitarbeiter_id: changeInfo.event.extendedProps.mitarbeiter_id,
+      auto_id: changeInfo.event.extendedProps.auto_id
     };
-
-    // Optimistisches Update im Frontend (inklusive Neuberechnung der Farben beim Ziehen!)
-    const updatedEvents = events.map(e => e.id === updatedEvent.id ? updatedEvent : e);
-    setEvents(assignColors(updatedEvents));
-
-    try {
-      const response = await fetch(`${API_URL}/${updatedEvent.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedEvent),
-      });
-
-      if (!response.ok) throw new Error('Backend Update fehlgeschlagen');
-    } catch (error) {
-      console.error('Fehler:', error);
-      changeInfo.revert(); 
-    }
+    setEvents(prev => assignColors(prev.map(e => e.id === updated.id ? updated : e)));
+    await fetch(`${API_URL}/termine/${updated.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated)
+    });
   };
 
+  // Helfer für Anzeige
+  const getName = (list, id) => list.find(i => i.id === id)?.name || 'Nicht zugewiesen';
+
   return (
-    <div>
-      <h2>Admin-Ansicht</h2>
-      <p>Klicken und ziehen für neue Termine. Drag & Drop zum Verschieben. Klick auf einen Termin für Details.</p>
+    <div className="container-fluid">
+      <h2 className="mb-4">Admin-Zentrale</h2>
       
-      <div style={{ height: '85vh', minHeight: '700px', backgroundColor: 'var(--surface)', padding: '1rem', borderRadius: '8px', position: 'relative' }}>
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="timeGridWeek" 
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-          }}
-          locale={deLocale}
-          events={events}
-          editable={true}
-          selectable={true}
-          selectMirror={true}
-          dayMaxEvents={true}
-          height="100%" 
-          
-          // --- NEU: Termine werden sauber nebeneinander platziert ---
-          slotEventOverlap={false}
-          
-          select={handleDateSelect}
-          eventClick={handleEventClick}
-          eventDrop={handleEventChange}
-          eventResize={handleEventChange}
-        />
+      <div className="admin-layout">
+        {/* SIDEBAR */}
+        <div className="admin-sidebar">
+          <div className="sidebar-header">
+            <h3>👤 Mitarbeiter</h3>
+            <button className="btn-add-small" onClick={() => addItem('mitarbeiter')}>+</button>
+          </div>
+          <ul>
+            {mitarbeiter.map(m => (
+              <li key={m.id} className="sidebar-item">
+                <span>👤 {m.name}</span>
+                <button className="btn-delete-icon" onClick={() => deleteItem('mitarbeiter', m.id)}>🗑️</button>
+              </li>
+            ))}
+          </ul>
+
+          <div className="sidebar-header mt-4">
+            <h3>🚐 Fahrzeuge</h3>
+            <button className="btn-add-small" onClick={() => addItem('autos')}>+</button>
+          </div>
+          <ul>
+            {autos.map(a => (
+              <li key={a.id} className="sidebar-item">
+                <span>🚐 {a.name}</span>
+                <button className="btn-delete-icon" onClick={() => deleteItem('autos', a.id)}>🗑️</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* KALENDER */}
+        <div className="admin-calendar-wrapper">
+          <div style={{ height: '85vh', backgroundColor: 'var(--surface)', padding: '1rem', borderRadius: '8px' }}>
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView="timeGridWeek"
+              headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }}
+              locale={deLocale}
+              events={events}
+              editable={true}
+              selectable={true}
+              selectMirror={true}
+              height="100%"
+              slotEventOverlap={false}
+              views={{ dayGridMonth: { eventDisplay: 'block' } }}
+              select={handleDateSelect}
+              eventClick={handleEventClick}
+              eventDrop={handleEventChange}
+              eventResize={handleEventChange}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Detail-Box (Modal) */}
-      {isModalOpen && selectedEvent && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Termin Details</h3>
-            <p><strong>Titel:</strong> {selectedEvent.title}</p>
-            <p><strong>Start:</strong> {new Date(selectedEvent.start).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}</p>
-            {selectedEvent.end && (
-              <p><strong>Ende:</strong> {new Date(selectedEvent.end).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}</p>
-            )}
+      {/* MODAL: ERSTELLEN */}
+      {isCreateModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsCreateModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3>Neuer Termin</h3>
+            <form onSubmit={handleCreateSubmit}>
+              <div className="form-group">
+                <label>Titel</label>
+                <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Mitarbeiter</label>
+                <select value={formData.mitarbeiter_id} onChange={e => setFormData({...formData, mitarbeiter_id: e.target.value})}>
+                  <option value="">-- Wählen --</option>
+                  {mitarbeiter.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Fahrzeug</label>
+                <select value={formData.auto_id} onChange={e => setFormData({...formData, auto_id: e.target.value})}>
+                  <option value="">-- Wählen --</option>
+                  {autos.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                </select>
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-cancel" onClick={() => setIsCreateModalOpen(false)}>Abbrechen</button>
+                <button type="submit" className="btn-edit">Speichern</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
+      {/* MODAL: DETAILS */}
+      {isDetailModalOpen && selectedEvent && (
+        <div className="modal-overlay" onClick={() => setIsDetailModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3>Termin-Details</h3>
+            <p><strong>Titel:</strong> {selectedEvent.title}</p>
+            <p><strong>Mitarbeiter:</strong> {getName(mitarbeiter, selectedEvent.extendedProps.mitarbeiter_id)}</p>
+            <p><strong>Fahrzeug:</strong> {getName(autos, selectedEvent.extendedProps.auto_id)}</p>
             <div className="modal-actions">
-              <button className="btn-cancel" onClick={closeModal} style={{ marginRight: 'auto' }}>Abbrechen</button>
-              <button className="btn-edit" onClick={handleEdit}>Bearbeiten</button>
-              <button className="btn-delete" onClick={handleDelete}>Löschen</button>
+              <button className="btn-cancel" onClick={() => setIsDetailModalOpen(false)} style={{marginRight: 'auto'}}>Schließen</button>
+              <button className="btn-delete" onClick={handleDeleteEvent}>Löschen</button>
             </div>
           </div>
         </div>
