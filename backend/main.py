@@ -1,69 +1,91 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 import json
 import os
-from typing import List, Dict, Any
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional
 
-# Define the data model for an event
-# Using 'id' as an optional field for creation
-class Event(BaseModel):
-    id: int
-    title: str
-    start: str
-    end: str
-
-# Path to the JSON database file
-DB_FILE = "db.json"
-
-# Initialize the FastAPI app
 app = FastAPI()
 
-# CORS (Cross-Origin Resource Sharing) middleware
-# This allows the frontend (running on a different URL) to communicate with the backend
-origins = [
-    "http://localhost:5173",  # Default Vite dev server URL
-    "http://localhost:3000",  # Default Create React App dev server URL
-]
-
+# CORS-Einstellungen (damit dein React-Frontend mit dem Backend reden darf)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"], # In Produktion besser die genaue URL (z.B. http://localhost:5173) angeben
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Helper function to read the database
-def read_db() -> List[Dict[str, Any]]:
+DB_FILE = "db.json"
+
+# Hilfsfunktionen zum Lesen und Schreiben der JSON-Datei
+def read_db():
     if not os.path.exists(DB_FILE):
         return []
-    with open(DB_FILE, "r") as f:
+    with open(DB_FILE, "r", encoding="utf-8") as f:
         try:
-            data = json.load(f)
-            return data
+            return json.load(f)
         except json.JSONDecodeError:
             return []
 
-# Helper function to write to the database
-def write_db(data: List[Dict[str, Any]]):
-    with open(DB_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+def write_db(data):
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
-# API endpoint to get all events
-@app.get("/api/termine", response_model=List[Event])
-def get_events():
+# Pydantic Model für das Empfangen von Termin-Daten
+class Termin(BaseModel):
+    id: str
+    title: str
+    start: str
+    end: Optional[str] = None
+    allDay: Optional[bool] = False
+
+# --- DEINE BESTEHENDEN ROUTEN (GET & POST) ---
+
+@app.get("/api/termine")
+def get_termine():
     return read_db()
 
-# API endpoint to create a new event
-@app.post("/api/termine", response_model=Event)
-def create_event(event: Event):
-    events = read_db()
-    events.append(event.dict())
-    write_db(events)
-    return event
+@app.post("/api/termine")
+def create_termin(termin: Termin):
+    termine = read_db()
+    termine.append(termin.dict())
+    write_db(termine)
+    return {"message": "Termin erfolgreich erstellt"}
 
-# A root endpoint for basic testing
-@app.get("/")
-def read_root():
-    return {"message": "Kalender Backend is running"}
+
+# --- NEU: ROUTEN FÜR DELETE UND PUT ---
+
+# 1. DELETE-Route (Zum Löschen eines Termins)
+@app.delete("/api/termine/{termin_id}")
+def delete_termin(termin_id: str):
+    termine = read_db()
+    
+    # Filtere alle Termine heraus, die NICHT die gesuchte ID haben
+    neue_termine = [t for t in termine if str(t.get("id")) != termin_id]
+    
+    # Wenn die Listen gleich lang sind, wurde nichts gefunden
+    if len(termine) == len(neue_termine):
+        raise HTTPException(status_code=404, detail="Termin nicht gefunden")
+        
+    write_db(neue_termine)
+    return {"message": f"Termin mit ID {termin_id} gelöscht"}
+
+# 2. PUT-Route (Zum Aktualisieren/Verschieben per Drag & Drop)
+@app.put("/api/termine/{termin_id}")
+def update_termin(termin_id: str, updated_termin: Termin):
+    termine = read_db()
+    termin_gefunden = False
+    
+    # Suche den Termin und ersetze seine Daten
+    for i, t in enumerate(termine):
+        if str(t.get("id")) == termin_id:
+            termine[i] = updated_termin.dict()
+            termin_gefunden = True
+            break
+            
+    if not termin_gefunden:
+        raise HTTPException(status_code=404, detail="Termin nicht gefunden")
+        
+    write_db(termine)
+    return {"message": f"Termin mit ID {termin_id} aktualisiert"}

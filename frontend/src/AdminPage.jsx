@@ -3,33 +3,74 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import deLocale from '@fullcalendar/core/locales/de'; // Deutsches Sprachpaket
+import deLocale from '@fullcalendar/core/locales/de';
 
 const API_URL = 'http://localhost:8000/api/termine';
 
+// --- NEU: Farbpalette für überlappende Termine ---
+const colorPalette = [
+  'var(--primary)', // Dein Standard-Blau
+  '#28a745',        // Grün
+  '#f39c12',        // Orange
+  '#dc3545',        // Rot
+  '#17a2b8',        // Türkis
+  '#6f42c1'         // Lila
+];
+
+// --- NEU: Funktion, die Überlappungen erkennt und Farben verteilt ---
+const assignColors = (rawEvents) => {
+  // 1. Termine nach Startzeit sortieren
+  const sorted = [...rawEvents].sort((a, b) => new Date(a.start) - new Date(b.start));
+  const coloredEvents = [];
+
+  sorted.forEach(event => {
+    // 2. Prüfen, welche bereits gefärbten Termine sich mit diesem überschneiden
+    const overlapping = coloredEvents.filter(e => {
+      const startA = new Date(event.start);
+      const endA = new Date(event.end || event.start);
+      const startB = new Date(e.start);
+      const endB = new Date(e.end || e.start);
+      return startB < endA && endB > startA; // Logik für zeitliche Überschneidung
+    });
+
+    // 3. Schauen, welche Farben von den Nachbarn schon belegt sind
+    const usedColors = overlapping.map(e => e.backgroundColor);
+
+    // 4. Erste freie Farbe aus der Palette nehmen (oder Standard-Blau, falls alle belegt)
+    const availableColor = colorPalette.find(color => !usedColors.includes(color)) || colorPalette[0];
+
+    // 5. Dem Termin die Farbe zuweisen
+    coloredEvents.push({
+      ...event,
+      backgroundColor: availableColor,
+      borderColor: availableColor
+    });
+  });
+
+  return coloredEvents;
+};
+
 function AdminPage() {
   const [events, setEvents] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
-  // 1. Termine beim Laden der Seite vom Backend holen
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const response = await fetch(API_URL);
         const data = await response.json();
-        setEvents(data);
+        // Farben direkt beim Laden berechnen
+        setEvents(assignColors(data));
       } catch (error) {
-        console.error('Fehler beim Laden der Termine:', error);
+        console.error('Fehler beim Laden:', error);
       }
     };
-
     fetchEvents();
   }, []);
 
-  // 2. Termin erstellen (Auswählen eines Zeitraums)
   const handleDateSelect = async (selectInfo) => {
     const title = window.prompt('Neuer Termin Titel:');
-    
-    // Hebt die Markierung im Kalender auf
     const calendarApi = selectInfo.view.calendar;
     calendarApi.unselect(); 
 
@@ -37,7 +78,7 @@ function AdminPage() {
       const newEvent = {
         id: new Date().getTime().toString(),
         title,
-        start: selectInfo.startStr, // FullCalendar liefert direkt ISO-Strings
+        start: selectInfo.startStr,
         end: selectInfo.endStr,
         allDay: selectInfo.allDay
       };
@@ -48,10 +89,9 @@ function AdminPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newEvent),
         });
-        
         if (response.ok) {
-          // Direkt in den State pushen, FullCalendar zeigt es sofort an
-          setEvents([...events, newEvent]);
+          // Farben neu berechnen, wenn ein neuer Termin dazu kommt
+          setEvents(prev => assignColors([...prev, newEvent]));
         }
       } catch (error) {
         console.error('Fehler beim Speichern:', error);
@@ -59,35 +99,73 @@ function AdminPage() {
     }
   };
 
-  // 3. Termin löschen (Klick auf das Event)
-  const handleEventClick = async (clickInfo) => {
-    if (window.confirm(`Möchten Sie den Termin "${clickInfo.event.title}" wirklich löschen?`)) {
+  const handleEventClick = (clickInfo) => {
+    setSelectedEvent(clickInfo.event);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedEvent(null);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedEvent) return;
+    try {
+      const response = await fetch(`${API_URL}/${selectedEvent.id}`, { method: 'DELETE' });
+      if (response.ok) {
+        const updatedEvents = events.filter(e => e.id !== selectedEvent.id);
+        setEvents(assignColors(updatedEvents)); // Farben neu anpassen, falls Lücken entstehen
+        closeModal();
+      }
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!selectedEvent) return;
+    const neuerTitel = window.prompt('Titel bearbeiten:', selectedEvent.title);
+    
+    if (neuerTitel && neuerTitel !== selectedEvent.title) {
+      const updatedEvent = {
+        id: selectedEvent.id,
+        title: neuerTitel,
+        start: selectedEvent.startStr,
+        end: selectedEvent.endStr || selectedEvent.startStr,
+        allDay: selectedEvent.allDay
+      };
+
       try {
-        const response = await fetch(`${API_URL}/${clickInfo.event.id}`, {
-          method: 'DELETE',
+        const response = await fetch(`${API_URL}/${selectedEvent.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedEvent),
         });
 
         if (response.ok) {
-          // Event aus der Ansicht entfernen
-          clickInfo.event.remove(); 
-          // State updaten
-          setEvents(events.filter(e => e.id !== clickInfo.event.id));
+          const updatedEvents = events.map(e => e.id === updatedEvent.id ? updatedEvent : e);
+          setEvents(assignColors(updatedEvents));
+          closeModal();
         }
       } catch (error) {
-        console.error('Fehler beim Löschen:', error);
+        console.error('Fehler beim Bearbeiten:', error);
       }
     }
   };
 
-  // 4. Termin verschieben oder Dauer ändern (Drag & Drop)
   const handleEventChange = async (changeInfo) => {
     const updatedEvent = {
       id: changeInfo.event.id,
       title: changeInfo.event.title,
       start: changeInfo.event.startStr,
-      end: changeInfo.event.endStr || changeInfo.event.startStr, // Falls kein Ende definiert ist
+      end: changeInfo.event.endStr || changeInfo.event.startStr,
       allDay: changeInfo.event.allDay
     };
+
+    // Optimistisches Update im Frontend (inklusive Neuberechnung der Farben beim Ziehen!)
+    const updatedEvents = events.map(e => e.id === updatedEvent.id ? updatedEvent : e);
+    setEvents(assignColors(updatedEvents));
 
     try {
       const response = await fetch(`${API_URL}/${updatedEvent.id}`, {
@@ -96,13 +174,9 @@ function AdminPage() {
         body: JSON.stringify(updatedEvent),
       });
 
-      if (!response.ok) {
-        throw new Error('Backend Update fehlgeschlagen');
-      }
+      if (!response.ok) throw new Error('Backend Update fehlgeschlagen');
     } catch (error) {
-      console.error('Fehler beim Aktualisieren:', error);
-      // Das ist genial an FullCalendar: Wenn das Backend streikt, 
-      // springt das Event einfach an seinen alten Platz zurück!
+      console.error('Fehler:', error);
       changeInfo.revert(); 
     }
   };
@@ -110,46 +184,54 @@ function AdminPage() {
   return (
     <div>
       <h2>Admin-Ansicht</h2>
-      <p>Klicken und ziehen für neue Termine. Drag & Drop zum Verschieben. Klick auf einen Termin zum Löschen.</p>
+      <p>Klicken und ziehen für neue Termine. Drag & Drop zum Verschieben. Klick auf einen Termin für Details.</p>
       
-      {/* Wrapper für die Höhe des Kalenders */}
-      <div style={{ height: '75vh', minHeight: '600px', backgroundColor: 'var(--surface)', padding: '1rem', borderRadius: '8px' }}>
+      <div style={{ height: '85vh', minHeight: '700px', backgroundColor: 'var(--surface)', padding: '1rem', borderRadius: '8px', position: 'relative' }}>
         <FullCalendar
-          // Die geladenen Plugins
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          
-          // Ansicht beim Start
           initialView="timeGridWeek" 
-          
-          // Die Toolbar mit funktionierenden Buttons!
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
           }}
-          
-          // Spracheinstellung
           locale={deLocale}
-          
-          // Termindaten
           events={events}
-          
-          // Funktionen aktivieren
-          editable={true} // Erlaubt Drag & Drop
-          selectable={true} // Erlaubt das Markieren von Zeiträumen
-          selectMirror={true} // Zeigt beim Ziehen schon den "Geister-Termin"
-          dayMaxEvents={true} // Wenn zu viele Termine am Tag sind, kommt ein "+ X weitere" Link
-          
-          // Höhe auf 100% des äußeren divs setzen (inkl. Scrollen in der Wochenansicht)
+          editable={true}
+          selectable={true}
+          selectMirror={true}
+          dayMaxEvents={true}
           height="100%" 
           
-          // Event Listener verknüpfen
+          // --- NEU: Termine werden sauber nebeneinander platziert ---
+          slotEventOverlap={false}
+          
           select={handleDateSelect}
           eventClick={handleEventClick}
-          eventDrop={handleEventChange} // Auslöser fürs Verschieben
-          eventResize={handleEventChange} // Auslöser fürs "Größer/Kleiner ziehen"
+          eventDrop={handleEventChange}
+          eventResize={handleEventChange}
         />
       </div>
+
+      {/* Detail-Box (Modal) */}
+      {isModalOpen && selectedEvent && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Termin Details</h3>
+            <p><strong>Titel:</strong> {selectedEvent.title}</p>
+            <p><strong>Start:</strong> {new Date(selectedEvent.start).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+            {selectedEvent.end && (
+              <p><strong>Ende:</strong> {new Date(selectedEvent.end).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+            )}
+
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={closeModal} style={{ marginRight: 'auto' }}>Abbrechen</button>
+              <button className="btn-edit" onClick={handleEdit}>Bearbeiten</button>
+              <button className="btn-delete" onClick={handleDelete}>Löschen</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

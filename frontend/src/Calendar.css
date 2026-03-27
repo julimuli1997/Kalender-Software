@@ -58,3 +58,94 @@
   background: var(--border-color); 
   border-radius: 4px;
 }
+/* --- Modal (Termin-Details Box) --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7); /* Halbtransparenter schwarzer Hintergrund */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Stellt sicher, dass die Box über allem anderen liegt */
+}
+
+.modal-content {
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 2rem;
+  
+  /* --- NEU: Flexible Größenanpassung --- */
+  width: fit-content;      /* Die Breite passt sich genau dem Text an */
+  min-width: 320px;        /* Die Box wird aber nie schmaler als 320px */
+  max-width: 90vw;         /* Nimmt maximal 90% der Bildschirmbreite ein (wichtig für kleine Monitore) */
+  max-height: 90vh;        /* Nimmt maximal 90% der Bildschirmhöhe ein */
+  overflow-y: auto;        /* Falls der Inhalt höher als der Bildschirm ist, kann man in der Box scrollen */
+  
+  color: var(--text-color);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  
+  /* Verhindert, dass extrem lange Wörter (ohne Leerzeichen) die Box sprengen */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.modal-content p {
+  margin: 0.5rem 0;
+}
+
+/* Container für die Buttons unten rechts */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end; /* Schiebt alles nach rechts */
+  gap: 10px; /* Abstand zwischen den Buttons */
+  margin-top: 2rem;
+}
+
+/* Button Styles */
+.modal-actions button {
+  padding: 0.6rem 1.2rem; /* Ein kleines bisschen mehr Platz zum Rand sieht oft besser aus */
+  border-radius: 4px;
+  border: none;
+  font-family: var(--font-family);
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.2s;
+  
+  /* --- NEU: Verhindert das Rausragen des Textes --- */
+  white-space: nowrap; /* Der Text darf innerhalb des Buttons nicht umbrechen */
+  width: max-content;  /* Der Button nimmt sich immer genau so viel Breite, wie der Text braucht */
+  flex-shrink: 0;      /* Verhindert, dass Flexbox den Button zusammenquetscht */
+}
+
+/* Neuer Name: btn-cancel, damit Bootstrap uns in Ruhe lässt */
+.modal-actions .btn-cancel {
+  background-color: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.modal-actions .btn-cancel:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: #ffffff;
+}
+
+.btn-edit {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-delete {
+  background-color: #dc3545; /* Ein klassisches Rot für Löschen */
+  color: white;
+}
