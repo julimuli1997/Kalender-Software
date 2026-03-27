@@ -23,9 +23,10 @@ body {
 }
 
 .container {
-  max-width: 1200px;
+  /* Vorher stand hier max-width: 1200px */
+  max-width: 98%; /* Nutzt jetzt 98% der Bildschirmbreite */
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem; /* Etwas weniger Abstand zum Rand für noch mehr Platz */
 }
 
 h1, h2, h3, h4, h5, h6 {

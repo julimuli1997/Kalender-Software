@@ -13,7 +13,12 @@ function App() {
           <NavLink to="/admin">
             Admin-Steuerung
           </NavLink>
-          <NavLink to="/kalender">
+          {/* NEU: target="_blank" öffnet den Link in einem neuen Tab/Fenster */}
+          <NavLink 
+            to="/kalender" 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
             TV-Ansicht
           </NavLink>
         </nav>
