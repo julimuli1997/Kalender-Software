@@ -1,91 +1,135 @@
 import json
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 app = FastAPI()
 
-# CORS-Einstellungen (damit dein React-Frontend mit dem Backend reden darf)
+# CORS muss alles erlauben, damit React mit FastAPI reden darf
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In Produktion besser die genaue URL (z.B. http://localhost:5173) angeben
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-DB_FILE = "db.json"
+# --- WEBSOCKET FÜR LIVE-UPDATES ---
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+    async def broadcast(self, message: str):
+        for connection in self.active_connections:
+            try: await connection.send_text(message)
+            except: pass
 
-# Hilfsfunktionen zum Lesen und Schreiben der JSON-Datei
-def read_db():
-    if not os.path.exists(DB_FILE):
-        return []
-    with open(DB_FILE, "r", encoding="utf-8") as f:
-        try:
-            return json.load(f)
-        except json.JSONDecodeError:
-            return []
+manager = ConnectionManager()
 
-def write_db(data):
-    with open(DB_FILE, "w", encoding="utf-8") as f:
+# --- HELFER FUNKTIONEN ---
+def read_json(filename):
+    if not os.path.exists(filename): return []
+    with open(filename, "r", encoding="utf-8") as f:
+        try: return json.load(f)
+        except: return []
+
+def write_json(filename, data):
+    with open(filename, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
-# Pydantic Model für das Empfangen von Termin-Daten
+# --- MODELLE ---
+class NameModel(BaseModel):
+    id: str
+    name: str
+
 class Termin(BaseModel):
     id: str
     title: str
     start: str
     end: Optional[str] = None
     allDay: Optional[bool] = False
+    mitarbeiter_id: Optional[str] = None
+    auto_id: Optional[str] = None
 
-# --- DEINE BESTEHENDEN ROUTEN (GET & POST) ---
+# --- WEBSOCKET ENDPUNKT ---
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True: await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
 
+# --- ROUTEN FÜR MITARBEITER ---
+@app.get("/api/mitarbeiter")
+def get_m(): return read_json("mitarbeiter.json")
+
+@app.post("/api/mitarbeiter")
+async def add_m(m: NameModel):
+    data = read_json("mitarbeiter.json")
+    data.append(m.dict())
+    write_json("mitarbeiter.json", data)
+    await manager.broadcast("update")
+    return m
+
+@app.delete("/api/mitarbeiter/{m_id}")
+async def del_m(m_id: str):
+    data = read_json("mitarbeiter.json")
+    write_json("mitarbeiter.json", [x for x in data if x["id"] != m_id])
+    await manager.broadcast("update")
+    return {"status": "ok"}
+
+# --- ROUTEN FÜR AUTOS ---
+@app.get("/api/autos")
+def get_a(): return read_json("autos.json")
+
+@app.post("/api/autos")
+async def add_a(a: NameModel):
+    data = read_json("autos.json")
+    data.append(a.dict())
+    write_json("autos.json", data)
+    await manager.broadcast("update")
+    return a
+
+@app.delete("/api/autos/{a_id}")
+async def del_a(a_id: str):
+    data = read_json("autos.json")
+    write_json("autos.json", [x for x in data if x["id"] != a_id])
+    await manager.broadcast("update")
+    return {"status": "ok"}
+
+# --- ROUTEN FÜR TERMINE ---
 @app.get("/api/termine")
-def get_termine():
-    return read_db()
+def get_t(): return read_json("db.json")
 
 @app.post("/api/termine")
-def create_termin(termin: Termin):
-    termine = read_db()
-    termine.append(termin.dict())
-    write_db(termine)
-    return {"message": "Termin erfolgreich erstellt"}
+async def create_t(t: Termin):
+    data = read_json("db.json")
+    data.append(t.dict())
+    write_json("db.json", data)
+    await manager.broadcast("update")
+    return t
 
+@app.delete("/api/termine/{t_id}")
+async def del_t(t_id: str):
+    data = read_json("db.json")
+    write_json("db.json", [x for x in data if str(x.get("id")) != t_id])
+    await manager.broadcast("update")
+    return {"status": "ok"}
 
-# --- NEU: ROUTEN FÜR DELETE UND PUT ---
-
-# 1. DELETE-Route (Zum Löschen eines Termins)
-@app.delete("/api/termine/{termin_id}")
-def delete_termin(termin_id: str):
-    termine = read_db()
-    
-    # Filtere alle Termine heraus, die NICHT die gesuchte ID haben
-    neue_termine = [t for t in termine if str(t.get("id")) != termin_id]
-    
-    # Wenn die Listen gleich lang sind, wurde nichts gefunden
-    if len(termine) == len(neue_termine):
-        raise HTTPException(status_code=404, detail="Termin nicht gefunden")
-        
-    write_db(neue_termine)
-    return {"message": f"Termin mit ID {termin_id} gelöscht"}
-
-# 2. PUT-Route (Zum Aktualisieren/Verschieben per Drag & Drop)
-@app.put("/api/termine/{termin_id}")
-def update_termin(termin_id: str, updated_termin: Termin):
-    termine = read_db()
-    termin_gefunden = False
-    
-    # Suche den Termin und ersetze seine Daten
-    for i, t in enumerate(termine):
-        if str(t.get("id")) == termin_id:
-            termine[i] = updated_termin.dict()
-            termin_gefunden = True
+@app.put("/api/termine/{t_id}")
+async def update_t(t_id: str, t: Termin):
+    data = read_json("db.json")
+    for i, item in enumerate(data):
+        if str(item.get("id")) == t_id:
+            data[i] = t.dict()
             break
-            
-    if not termin_gefunden:
-        raise HTTPException(status_code=404, detail="Termin nicht gefunden")
-        
-    write_db(termine)
-    return {"message": f"Termin mit ID {termin_id} aktualisiert"}
+    write_json("db.json", data)
+    await manager.broadcast("update")
+    return t
