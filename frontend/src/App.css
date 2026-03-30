@@ -27,6 +27,31 @@ body {
   max-width: 98%; /* Nutzt jetzt 98% der Bildschirmbreite */
   margin: 0 auto;
   padding: 1rem; /* Etwas weniger Abstand zum Rand für noch mehr Platz */
+  
+  .tv-screen-wrapper {
+  position: fixed; /* Löst das Element aus dem normalen Fluss (und dem Container) heraus */
+  top: 0;
+  left: 0;
+  width: 100vw !important; /* Exakt 100% der Bildschirmbreite */
+  height: 100vh !important; /* Exakt 100% der Bildschirmhöhe */
+  background-color: var(--background);
+  z-index: 9999; /* Damit es über dem Header der App liegt */
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.tv-calendar-content {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Entfernt die Abstände innerhalb des FullCalendars für den TV */
+.tv-calendar-content .fc {
+  padding: 0 !important;
+  border: none !important;
+}
 }
 
 h1, h2, h3, h4, h5, h6 {
