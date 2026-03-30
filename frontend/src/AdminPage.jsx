@@ -1,30 +1,25 @@
 import { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
+import timegridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import deLocale from '@fullcalendar/core/locales/de';
 import './Calendar.css';
 
 const API_URL = 'http://localhost:8000/api';
-const colorPalette = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6610f2', '#e83e8c'];
 
-const assignColors = (rawEvents) => {
-  const sorted = [...rawEvents].sort((a, b) => new Date(a.start) - new Date(b.start));
-  const coloredEvents = [];
-  sorted.forEach(event => {
-    const overlapping = coloredEvents.filter(e => {
-      const startA = new Date(event.start);
-      const endA = new Date(event.end || event.start);
-      const startB = new Date(e.start);
-      const endB = new Date(e.end || e.start);
-      return startB < endA && endB > startA; 
-    });
-    const usedColors = overlapping.map(e => e.backgroundColor);
-    const availableColor = colorPalette.find(color => !usedColors.includes(color)) || colorPalette[0];
-    coloredEvents.push({ ...event, backgroundColor: availableColor, borderColor: availableColor });
+const odooColors = ['#017e84', '#b05c38', '#875a7b', '#21b799', '#3b7ebf', '#e4a900', '#d83232', '#8f8f8f'];
+
+const assignColors = (rawEvents, mitarbeiterList) => {
+  const colorMap = {};
+  mitarbeiterList.forEach((m, index) => {
+    colorMap[m.id] = odooColors[index % odooColors.length];
   });
-  return coloredEvents;
+
+  return rawEvents.map(event => {
+    const color = colorMap[event.mitarbeiter_id] || '#6c757d'; 
+    return { ...event, backgroundColor: color, borderColor: color };
+  });
 };
 
 function AdminPage() {
@@ -32,11 +27,30 @@ function AdminPage() {
   const [mitarbeiter, setMitarbeiter] = useState([]);
   const [autos, setAutos] = useState([]);
   const [visibleDays, setVisibleDays] = useState("1");
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [theme, setTheme] = useState('light');
+  
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
   const [newTerminTimes, setNewTerminTimes] = useState({ start: '', end: '', allDay: false });
   const [formData, setFormData] = useState({ title: '', mitarbeiter_id: '', auto_id: '' });
+
+  const [popoverInfo, setPopoverInfo] = useState(null);
+  const [editBeschreibung, setEditBeschreibung] = useState('');
+
+  // --- NEU: Der bombensichere Klick-Überwacher ---
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      // Wenn der Klick IN dem Kästchen passiert -> ignorieren
+      if (e.target.closest('.odoo-popover-card')) return;
+      // Wenn der Klick AUF einem Kalender-Event passiert -> ignorieren (das macht Fullcalendar)
+      if (e.target.closest('.fc-event')) return;
+      
+      // Ansonsten: Kästchen schließen
+      setPopoverInfo(null);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,15 +59,36 @@ function AdminPage() {
           fetch(`${API_URL}/termine`), fetch(`${API_URL}/mitarbeiter`),
           fetch(`${API_URL}/autos`), fetch(`${API_URL}/settings`)
         ]);
-        setEvents(assignColors(await t.json()));
-        setMitarbeiter(await m.json());
+        const mData = await m.json();
+        const tData = await t.json();
+        
+        setMitarbeiter(mData);
+        setEvents(assignColors(tData, mData));
         setAutos(await a.json());
+        
         const sd = await s.json();
         if (sd?.visibleDays) setVisibleDays(sd.visibleDays);
+        if (sd?.theme) {
+          setTheme(sd.theme);
+          if (sd.theme === 'light') document.body.classList.add('light-theme');
+          else document.body.classList.remove('light-theme');
+        } else {
+          document.body.classList.add('light-theme'); 
+        }
       } catch (e) { console.error(e); }
     };
     fetchData();
   }, []);
+
+  const toggleTheme = async () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.body.classList.toggle('light-theme');
+    await fetch(`${API_URL}/settings`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ theme: newTheme })
+    });
+  };
 
   const handleSettingsChange = async (e) => {
     const v = e.target.value;
@@ -72,141 +107,246 @@ function AdminPage() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item)
     });
-    if (res.ok) type === 'mitarbeiter' ? setMitarbeiter([...mitarbeiter, item]) : setAutos([...autos, item]);
+    if (res.ok) {
+      if (type === 'mitarbeiter') {
+        const newM = [...mitarbeiter, item];
+        setMitarbeiter(newM);
+        setEvents(assignColors(events, newM)); 
+      } else setAutos([...autos, item]);
+    }
   };
 
   const deleteItem = async (type, id) => {
-    if (!window.confirm("Löschen?")) return;
+    if (!window.confirm("Wirklich löschen?")) return;
     if ((await fetch(`${API_URL}/${type}/${id}`, { method: 'DELETE' })).ok) {
       type === 'mitarbeiter' ? setMitarbeiter(mitarbeiter.filter(x => x.id !== id)) : setAutos(autos.filter(x => x.id !== id));
     }
   };
 
-  const renderEventContent = (info) => {
-    const m = mitarbeiter.find(x => x.id === info.event.extendedProps.mitarbeiter_id);
-    const a = autos.find(x => x.id === info.event.extendedProps.auto_id);
-    return (
-      <div style={{ padding: '4px', color: 'white' }}>
-        <div style={{ fontWeight: 'bold', fontSize: '0.85rem' }}>{info.event.title}</div>
-        {m && <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>👤 {m.name}</div>}
-        {a && <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>🚐 {a.name}</div>}
+  const handleUpdateBeschreibung = async () => {
+    if (!popoverInfo) return;
+    const currentEvent = popoverInfo.event;
+    
+    const updatedEventData = {
+      id: currentEvent.id,
+      title: currentEvent.title,
+      start: currentEvent.startStr,
+      end: currentEvent.endStr || currentEvent.startStr,
+      allDay: false,
+      mitarbeiter_id: currentEvent.extendedProps.mitarbeiter_id,
+      auto_id: currentEvent.extendedProps.auto_id,
+      beschreibung: editBeschreibung
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/termine/${updatedEventData.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedEventData)
+      });
+
+      if (res.ok) {
+        setEvents(prev => assignColors(prev.map(e => e.id === updatedEventData.id ? updatedEventData : e), mitarbeiter));
+        setPopoverInfo(null);
+      } else {
+        window.alert("Fehler beim Speichern der Beschreibung.");
+      }
+    } catch (error) {
+      console.error(error);
+      window.alert("Netzwerkfehler.");
+    }
+  };
+
+  const renderEventContent = (info) => (
+    <div className="event-card-body">
+      <div className="event-card-title">{info.event.title}</div>
+      <div className="event-card-meta">
+        <div>👤 {mitarbeiter.find(x => x.id === info.event.extendedProps.mitarbeiter_id)?.name || '-'}</div>
+        <div>🚐 {autos.find(x => x.id === info.event.extendedProps.auto_id)?.name || '-'}</div>
       </div>
-    );
+    </div>
+  );
+
+  const formatTime = (date) => {
+    if (!date) return '';
+    return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
-        <h1 style={{ fontSize: '1.5rem', margin: 0 }}>Steuerzentrale</h1>
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', background: 'var(--surface)', padding: '10px 20px', borderRadius: '12px' }}>
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>TV-Ansicht:</span>
-          <select value={visibleDays} onChange={handleSettingsChange} style={{ background: 'none', color: 'white', border: 'none', fontWeight: 'bold', outline: 'none' }}>
-            {[1, 2, 3, 5].map(d => <option key={d} value={d} style={{background: '#1a1d23'}}>{d} Tage</option>)}
-          </select>
+    <div className="app-container">
+      {/* HEADER */}
+      <div className="admin-header">
+        <div className="header-logo-container">
+          <h2 className="header-logo">BTL-Kalender</h2>
+          <span className="header-subtitle">J.O Design ™</span>
+        </div>
+        
+        <div className="header-controls">
+          <div className="theme-switch-wrapper">
+            <span>{theme === 'dark' ? '🌙' : '☀️'}</span>
+            <label className="theme-switch">
+              <input type="checkbox" checked={theme === 'light'} onChange={toggleTheme} />
+              <span className="slider"></span>
+            </label>
+          </div>
+          <div className="tv-select-box">
+            <select value={visibleDays} onChange={handleSettingsChange}>
+              {[1, 2, 3, 5].map(d => <option key={d} value={d}>{d} Tage</option>)}
+            </select>
+          </div>
         </div>
       </div>
 
       <div className="admin-layout">
+        {/* SIDEBAR */}
         <div className="admin-sidebar">
-          <div className="sidebar-header">
-            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>👤 Mitarbeiter</h3>
-            <button className="btn-edit" style={{padding: '5px 10px'}} onClick={() => addItem('mitarbeiter')}>+</button>
-          </div>
-          {mitarbeiter.map(m => (
-            <div key={m.id} className="sidebar-item">
-              <span>👤 {m.name}</span>
-              <span onClick={() => deleteItem('mitarbeiter', m.id)} style={{color: '#dc3545', cursor: 'pointer'}}>✕</span>
+          <div className="sidebar-group-box">
+            <div className="sidebar-header">
+              <h3>Mitarbeiter</h3>
+              <button className="btn-add-square" onClick={() => addItem('mitarbeiter')}>+</button>
             </div>
-          ))}
-          <div className="sidebar-header" style={{marginTop: '30px'}}>
-            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>🚐 Fahrzeuge</h3>
-            <button className="btn-edit" style={{padding: '5px 10px'}} onClick={() => addItem('autos')}>+</button>
-          </div>
-          {autos.map(a => (
-            <div key={a.id} className="sidebar-item">
-              <span>🚐 {a.name}</span>
-              <span onClick={() => deleteItem('autos', a.id)} style={{color: '#dc3545', cursor: 'pointer'}}>✕</span>
+            <div className="sidebar-list">
+              {mitarbeiter.map(m => (
+                <div key={m.id} className="sidebar-item">
+                  <span>👤 {m.name}</span>
+                  <span className="delete-x" onClick={() => deleteItem('mitarbeiter', m.id)}>✕</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          <div className="sidebar-group-box">
+            <div className="sidebar-header">
+              <h3>Fahrzeuge</h3>
+              <button className="btn-add-square" onClick={() => addItem('autos')}>+</button>
+            </div>
+            <div className="sidebar-list">
+              {autos.map(a => (
+                <div key={a.id} className="sidebar-item">
+                  <span>🚐 {a.name}</span>
+                  <span className="delete-x" onClick={() => deleteItem('autos', a.id)}>✕</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div style={{ flexGrow: 1 }}>
+        {/* CALENDAR */}
+        <div className="calendar-main-container">
           <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            plugins={[dayGridPlugin, timegridPlugin, interactionPlugin]}
             initialView="timeGridWeek"
             locale={deLocale}
             weekends={false}
-            allDaySlot={false} // ENTFERNT "GANZTÄGIG"
+            allDaySlot={false}
+            expandRows={true}
             events={events}
             eventContent={renderEventContent}
-            editable={true} selectable={true} height="calc(100vh - 150px)"
+            editable={true} selectable={true} height="100%"
             headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }}
             select={(info) => {
+              setPopoverInfo(null); 
               setNewTerminTimes({ start: info.startStr, end: info.endStr, allDay: false });
               setFormData({ title: '', mitarbeiter_id: '', auto_id: '' });
               setIsCreateModalOpen(true);
             }}
-            eventClick={(info) => { setSelectedEvent(info.event); setIsDetailModalOpen(true); }}
+            eventClick={(info) => {
+              // Kein stopPropagation mehr nötig, der native Listener regelt das
+              const rect = info.el.getBoundingClientRect();
+              const safeY = rect.top + 350 > window.innerHeight ? window.innerHeight - 360 : rect.top;
+              
+              setEditBeschreibung(info.event.extendedProps.beschreibung || '');
+
+              setPopoverInfo({
+                event: info.event,
+                x: rect.right + 280 > window.innerWidth ? rect.left - 280 : rect.right + 10,
+                y: safeY,
+              });
+            }}
             eventDrop={async (info) => {
-              const up = { id: info.event.id, title: info.event.title, start: info.event.startStr, end: info.event.endStr || info.event.startStr, allDay: false, mitarbeiter_id: info.event.extendedProps.mitarbeiter_id, auto_id: info.event.extendedProps.auto_id };
-              setEvents(prev => assignColors(prev.map(e => e.id === up.id ? up : e)));
+              const up = { 
+                id: info.event.id, 
+                title: info.event.title, 
+                start: info.event.startStr, 
+                end: info.event.endStr || info.event.startStr, 
+                allDay: false, 
+                mitarbeiter_id: info.event.extendedProps.mitarbeiter_id, 
+                auto_id: info.event.extendedProps.auto_id, 
+                beschreibung: info.event.extendedProps.beschreibung || '' 
+              };
+              setEvents(prev => assignColors(prev.map(e => e.id === up.id ? up : e), mitarbeiter));
               await fetch(`${API_URL}/termine/${up.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(up) });
             }}
           />
         </div>
       </div>
 
-      {isCreateModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsCreateModalOpen(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2 style={{marginTop: 0}}>Neuer Termin</h2>
-            <div className="form-group">
-              <label>Bezeichnung</label>
-              <input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+      {/* POPOVER KÄSTCHEN */}
+      {popoverInfo && (
+        <div 
+          className="odoo-popover-card popover-with-form" 
+          style={{ top: popoverInfo.y, left: popoverInfo.x, zIndex: 9995 }}
+        >
+          <div className="popover-header">
+            <h4 className="popover-title">{popoverInfo.event.title}</h4>
+            <span className="popover-close" onClick={() => setPopoverInfo(null)}>✕</span>
+          </div>
+          <div className="popover-body">
+            <div className="popover-detail-row">
+              <span className="popover-icon">🕒</span> 
+              {formatTime(popoverInfo.event.start)} - {formatTime(popoverInfo.event.end)} Uhr
             </div>
-            <div className="form-group">
-              <label>Mitarbeiter</label>
-              <select value={formData.mitarbeiter_id} onChange={e => setFormData({...formData, mitarbeiter_id: e.target.value})}>
-                <option value="">Nicht zugewiesen</option>
-                {mitarbeiter.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-              </select>
+            <div className="popover-detail-row">
+              <span className="popover-icon">👤</span> 
+              {mitarbeiter.find(x => x.id === popoverInfo.event.extendedProps.mitarbeiter_id)?.name || 'Nicht zugewiesen'}
             </div>
-            <div className="form-group">
-              <label>Fahrzeug</label>
-              <select value={formData.auto_id} onChange={e => setFormData({...formData, auto_id: e.target.value})}>
-                <option value="">Nicht zugewiesen</option>
-                {autos.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
+            <div className="popover-detail-row">
+              <span className="popover-icon">🚐</span> 
+              {autos.find(x => x.id === popoverInfo.event.extendedProps.auto_id)?.name || 'Kein Fahrzeug'}
             </div>
-            <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setIsCreateModalOpen(false)}>Abbruch</button>
-              <button className="btn-edit" onClick={async () => {
-                const n = { id: Date.now().toString(), ...formData, ...newTerminTimes, allDay: false };
-                const res = await fetch(`${API_URL}/termine`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(n) });
-                if (res.ok) { setEvents(assignColors([...events, n])); setIsCreateModalOpen(false); }
-              }}>Speichern</button>
+
+            <div className="popover-form-group">
+              <label className="popover-form-label">Beschreibung (Notizen)</label>
+              <textarea 
+                className="popover-textarea" 
+                value={editBeschreibung} 
+                onChange={(e) => setEditBeschreibung(e.target.value)} 
+                placeholder="Notizen hinzufügen..."
+                rows={4}
+              />
             </div>
+          </div>
+          <div className="popover-footer">
+            <button className="btn-save-popover" onClick={handleUpdateBeschreibung}>
+              💾 Speichern
+            </button>
+            <button className="btn-delete-popover" onClick={async () => {
+              if (window.confirm("Termin wirklich löschen?")) {
+                await fetch(`${API_URL}/termine/${popoverInfo.event.id}`, { method: 'DELETE' });
+                setEvents(events.filter(e => e.id !== popoverInfo.event.id));
+                setPopoverInfo(null);
+              }
+            }}>
+              🗑️ Löschen
+            </button>
           </div>
         </div>
       )}
 
-      {isDetailModalOpen && selectedEvent && (
-        <div className="modal-overlay" onClick={() => setIsDetailModalOpen(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2 style={{marginTop: 0}}>Termin Details</h2>
-            <p><strong>Was:</strong> {selectedEvent.title}</p>
-            <p><strong>Wer:</strong> 👤 {mitarbeiter.find(x => x.id === selectedEvent.extendedProps.mitarbeiter_id)?.name || 'Keiner'}</p>
-            <p><strong>Auto:</strong> 🚐 {autos.find(x => x.id === selectedEvent.extendedProps.auto_id)?.name || 'Keins'}</p>
-            <div className="modal-actions">
-              <button className="btn-delete" onClick={async () => {
-                if (window.confirm("Löschen?")) {
-                  await fetch(`${API_URL}/termine/${selectedEvent.id}`, { method: 'DELETE' });
-                  setEvents(assignColors(events.filter(e => e.id !== selectedEvent.id)));
-                  setIsDetailModalOpen(false);
-                }
-              }}>Löschen</button>
-              <button className="btn-cancel" onClick={() => setIsDetailModalOpen(false)}>Schließen</button>
-            </div>
+      {/* MODAL ZUM ERSTELLEN */}
+      {isCreateModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2 className="modal-title">Neuer Termin</h2>
+            <div className="form-group"><label>Bezeichnung</label><input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} /></div>
+            <div className="form-group"><label>Mitarbeiter</label><select value={formData.mitarbeiter_id} onChange={e => setFormData({...formData, mitarbeiter_id: e.target.value})}><option value="">--</option>{mitarbeiter.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></div>
+            <div className="form-group"><label>Fahrzeug</label><select value={formData.auto_id} onChange={e => setFormData({...formData, auto_id: e.target.value})}><option value="">--</option>{autos.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
+            <div className="modal-actions"><button className="btn-cancel" onClick={() => setIsCreateModalOpen(false)}>Abbruch</button><button className="btn-edit" onClick={async () => {
+                const n = { id: Date.now().toString(), ...formData, ...newTerminTimes, allDay: false, beschreibung: '' };
+                await fetch(`${API_URL}/termine`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(n) });
+                setEvents(assignColors([...events, n], mitarbeiter)); 
+                setIsCreateModalOpen(false);
+              }}>Speichern</button></div>
           </div>
         </div>
       )}

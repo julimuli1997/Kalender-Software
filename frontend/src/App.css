@@ -62,3 +62,60 @@ h1, h2, h3, h4, h5, h6 {
 p {
   color: var(--text-color-muted);
 }
+
+/* --- Text Clipping Fixes --- */
+
+.event-inner-content {
+  padding: 2px 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.event-title {
+  font-weight: bold;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Adds the "..." */
+}
+
+.event-subtitle {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* TV Specific sizes */
+.event-inner-content-tv {
+  padding: 8px;
+  overflow: hidden;
+}
+
+.event-title-tv {
+  font-weight: bold;
+  font-size: 1.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-subtitle-tv {
+  font-size: 0.9rem;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ensure FullCalendar doesn't let content leak */
+.fc-event-main {
+  overflow: hidden !important;
+}
+
+.fc-v-event .fc-event-main-frame {
+  flex-direction: column;
+}
