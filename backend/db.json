@@ -52,5 +52,15 @@
         "allDay": false,
         "mitarbeiter_id": "m2",
         "auto_id": "a1"
+    },
+    {
+        "id": "1774873915630",
+        "title": "hallo",
+        "start": "2026-03-30T06:30:00+02:00",
+        "end": "2026-03-30T10:30:00+02:00",
+        "allDay": false,
+        "mitarbeiter_id": "",
+        "auto_id": "",
+        "beschreibung": "hallo "
     }
 ]
