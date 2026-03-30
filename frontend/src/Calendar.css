@@ -1,312 +1,196 @@
-/* --- FullCalendar Dark Theme Anpassungen --- */
-
+/* --- GLOBAL DESIGN --- */
 :root {
-  /* Hintergrund und Rahmen an dein App-Design anpassen */
-  --fc-page-bg-color: transparent;
-  --fc-neutral-bg-color: var(--surface); /* Nutzt dein dunkles Grau */
-  --fc-border-color: var(--border-color);
-  
-  /* Textfarben */
-  --fc-neutral-text-color: var(--text-color);
-  
-  /* Buttons an deine primäre Farbe (Blau) anpassen */
-  --fc-button-text-color: #fff;
-  --fc-button-bg-color: var(--primary);
-  --fc-button-border-color: var(--primary);
-  --fc-button-hover-bg-color: var(--primary-variant);
-  --fc-button-hover-border-color: var(--primary-variant);
-  --fc-button-active-bg-color: var(--primary-variant);
-  --fc-button-active-border-color: var(--primary-variant);
-
-  /* Die Termine selbst */
-  --fc-event-bg-color: var(--primary);
-  --fc-event-border-color: var(--primary);
-  --fc-event-text-color: #fff;
-
-  /* Der heutige Tag (dezent hervorgehoben statt grellweiß) */
-  --fc-today-bg-color: rgba(255, 255, 255, 0.05);
+  --background: #0f1114;
+  --surface: #1a1d23;
+  --surface-bright: #242931;
+  --primary: #007bff;
+  --primary-glow: rgba(0, 123, 255, 0.4);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --text-main: #ffffff;
+  --text-muted: #a0aec0;
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* --- Zusätzliche Feinschliffe --- */
-
-/* Standard-Textfarbe für den gesamten Kalender erzwingen */
-.fc {
-  color: var(--text-color);
-}
-
-/* Entfernt die blaue Unterstreichung bei den Datums-Zahlen */
-.fc .fc-col-header-cell-cushion,
-.fc .fc-daygrid-day-number {
-  color: var(--text-color);
-  text-decoration: none;
-}
-
-.fc .fc-col-header-cell-cushion:hover,
-.fc .fc-daygrid-day-number:hover {
-  text-decoration: underline;
-}
-
-/* Macht die Scrollbars im Kalender etwas dunkler/dezenter */
-.fc-scroller::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-.fc-scroller::-webkit-scrollbar-track {
-  background: var(--background); 
-}
-.fc-scroller::-webkit-scrollbar-thumb {
-  background: var(--border-color); 
-  border-radius: 4px;
-}
-/* --- Modal (Termin-Details Box) --- */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7); /* Halbtransparenter schwarzer Hintergrund */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000; /* Stellt sicher, dass die Box über allem anderen liegt */
-}
-
-.modal-content {
-  background-color: var(--surface);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 2rem;
-  
-  /* --- NEU: Flexible Größenanpassung --- */
-  width: fit-content;      /* Die Breite passt sich genau dem Text an */
-  min-width: 320px;        /* Die Box wird aber nie schmaler als 320px */
-  max-width: 90vw;         /* Nimmt maximal 90% der Bildschirmbreite ein (wichtig für kleine Monitore) */
-  max-height: 90vh;        /* Nimmt maximal 90% der Bildschirmhöhe ein */
-  overflow-y: auto;        /* Falls der Inhalt höher als der Bildschirm ist, kann man in der Box scrollen */
-  
-  color: var(--text-color);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-  
-  /* Verhindert, dass extrem lange Wörter (ohne Leerzeichen) die Box sprengen */
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
-.modal-content h3 {
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.5rem;
-}
-
-.modal-content p {
-  margin: 0.5rem 0;
-}
-
-/* Container für die Buttons unten rechts */
-.modal-actions {
-  display: flex;
-  justify-content: flex-end; /* Schiebt alles nach rechts */
-  gap: 10px; /* Abstand zwischen den Buttons */
-  margin-top: 2rem;
-}
-
-/* Button Styles */
-.modal-actions button {
-  padding: 0.6rem 1.2rem; /* Ein kleines bisschen mehr Platz zum Rand sieht oft besser aus */
-  border-radius: 4px;
-  border: none;
+body {
+  background-color: var(--background);
+  color: var(--text-main);
+  margin: 0;
   font-family: var(--font-family);
-  cursor: pointer;
-  font-weight: 500;
-  transition: opacity 0.2s;
-  
-  /* --- NEU: Verhindert das Rausragen des Textes --- */
-  white-space: nowrap; /* Der Text darf innerhalb des Buttons nicht umbrechen */
-  width: max-content;  /* Der Button nimmt sich immer genau so viel Breite, wie der Text braucht */
-  flex-shrink: 0;      /* Verhindert, dass Flexbox den Button zusammenquetscht */
 }
 
-/* Neuer Name: btn-cancel, damit Bootstrap uns in Ruhe lässt */
-.modal-actions .btn-cancel {
-  background-color: transparent;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-}
-
-.modal-actions .btn-cancel:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: #ffffff;
-}
-
-.btn-edit {
-  background-color: var(--primary);
-  color: white;
-}
-
-.btn-delete {
-  background-color: #dc3545; /* Ein klassisches Rot für Löschen */
-  color: white;
-}
-
-/* --- Fix für das "+ weitere" Popover in der Monatsansicht --- */
-
-/* 1. Dem Popup einen festen Hintergrund und Schatten geben */
-.fc-popover {
-  background-color: var(--surface) !important; /* Kein transparenter Hintergrund mehr! */
-  border: 1px solid var(--border-color) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8) !important; /* Starker Schatten für Tiefeneffekt */
-  z-index: 1050 !important; /* Garantiert immer über allem anderen */
-  border-radius: 8px;
+/* --- FULLCALENDAR CHARAKTER TWEAKS --- */
+.fc {
+  --fc-page-bg-color: var(--background);
+  --fc-neutral-bg-color: var(--surface);
+  --fc-border-color: var(--border-color);
+  background: var(--surface);
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
-/* 2. Den Header des Popups (wo das Datum und das X stehen) abheben */
-.fc-popover-header {
-  background-color: var(--background) !important;
-  padding: 10px !important;
-  font-weight: bold;
+/* Toolbar & Buttons */
+.fc .fc-toolbar {
+  padding: 20px !important;
+  margin-bottom: 0 !important;
+  background: linear-gradient(to bottom, var(--surface-bright), var(--surface));
+  border-bottom: 1px solid var(--border-color);
 }
 
-/* 3. Den Innenbereich des Popups aufräumen */
-.fc-popover-body {
-  padding: 10px !important;
+.fc .fc-toolbar-title {
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.5px;
 }
 
-/* 4. Termine im Popup und in der Monatsansicht entzerren */
-.fc-daygrid-event {
-  margin-bottom: 4px !important; /* Zwingt einen Abstand zwischen die Termine */
-  padding: 3px 6px !important;
-  border-radius: 4px !important;
-  line-height: 1.4 !important; /* Verhindert, dass sich Buchstaben überschneiden */
-  font-size: 0.9rem !important; /* Etwas kleinere Schrift für mehr Übersicht */
+.fc .fc-button {
+  background: var(--surface-bright) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.5px !important;
+  padding: 8px 16px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
 }
 
-/* 5. Den "+ weitere" Link etwas schicker machen */
-.fc-daygrid-more-link {
-  color: var(--primary) !important;
-  font-weight: 600;
-  margin-top: 4px;
-  display: inline-block;
-  text-decoration: none;
+.fc .fc-button:hover {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  transform: translateY(-1px);
 }
 
-.fc-daygrid-more-link:hover {
-  text-decoration: underline;
+.fc .fc-button-active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 15px var(--primary-glow) !important;
 }
 
-/* --- Admin Layout (Sidebar & Kalender) --- */
+/* Kalender Grid */
+.fc th {
+  background: var(--surface-bright) !important;
+  padding: 12px 0 !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  color: var(--text-muted) !important;
+  text-transform: uppercase;
+}
+
+.fc-timegrid-slot {
+  height: 50px !important; /* Mehr Platz für Termine */
+  border-bottom: 1px solid rgba(255,255,255,0.03) !important;
+}
+
+.fc .fc-timegrid-slot-label-cushion {
+  font-size: 0.8rem !important;
+  color: var(--text-muted);
+}
+
+/* Events mit Charakter */
+.fc-v-event {
+  border: none !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+  transition: transform 0.1s ease;
+}
+
+.fc-v-event:hover {
+  transform: scale(1.02);
+  z-index: 10;
+}
+
+/* TV & FULLSCREEN WRAPPER */
+.tv-screen-wrapper {
+  position: fixed;
+  inset: 0;
+  background: var(--background);
+  z-index: 9999;
+}
+
+.tv-calendar-content {
+  height: 100vh;
+  padding: 0;
+}
+
+/* --- ADMIN SIDEBAR --- */
 .admin-layout {
   display: flex;
-  gap: 20px;
-  align-items: flex-start;
+  gap: 25px;
+  padding: 20px;
+  height: calc(100vh - 80px);
 }
 
 .admin-sidebar {
-  width: 250px;
-  background-color: var(--surface);
+  width: 280px;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 20px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 1rem;
-  flex-shrink: 0;
-}
-
-.admin-sidebar h3 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 1.1rem;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 5px;
-}
-
-.admin-sidebar ul {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 20px 0;
-}
-
-.admin-sidebar li {
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  font-size: 0.9rem;
-}
-
-.admin-calendar-wrapper {
-  flex-grow: 1;
-  min-width: 0; /* Wichtig, damit der Kalender nicht überläuft */
-}
-
-/* --- Formular Styles für das Modal --- */
-.form-group {
-  margin-bottom: 1rem;
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  color: var(--text-color-muted);
-}
-
-.form-group input,
-.form-group select {
-  padding: 0.6rem;
-  border-radius: 4px;
-  border: 1px solid var(--border-color);
-  background-color: var(--background);
-  color: var(--text-color);
-  font-family: var(--font-family);
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: var(--primary);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
 .sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.btn-add-small {
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 2px 8px;
-  cursor: pointer;
-  font-size: 1.2rem;
+  margin-bottom: 20px;
 }
 
 .sidebar-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 8px 5px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 10px 12px;
+  background: var(--surface-bright);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 1px solid transparent;
+  transition: border 0.2s;
 }
 
-.btn-delete-icon {
-  background: transparent;
-  color: #dc3545;
-  border: none;
-  cursor: pointer;
-  font-size: 0.8rem;
-  opacity: 0.6;
+.sidebar-item:hover {
+  border-color: var(--primary);
 }
 
-.btn-delete-icon:hover {
-  opacity: 1;
-}
-
-.sidebar-label {
+/* --- MODALS --- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(5px);
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 8px;
+  z-index: 10000;
 }
+
+.modal-content {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 30px;
+  width: 400px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 12px;
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: white;
+  margin-bottom: 15px;
+}
+
+.btn-edit { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.btn-cancel { background: transparent; color: white; border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+.btn-delete { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }

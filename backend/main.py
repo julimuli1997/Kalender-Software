@@ -133,3 +133,18 @@ async def update_t(t_id: str, t: Termin):
     write_json("db.json", data)
     await manager.broadcast("update")
     return t
+
+# --- SETTINGS ROUTE ---
+@app.get("/api/settings")
+def get_settings():
+    settings = read_json("settings.json")
+    # Standardwert, falls Datei leer oder neu
+    if not settings:
+        return {"visibleDays": "1"} 
+    return settings
+
+@app.post("/api/settings")
+async def update_settings(settings: dict):
+    write_json("settings.json", settings)
+    await manager.broadcast("update") # TV sofort informieren
+    return settings

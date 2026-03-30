@@ -7,11 +7,8 @@ import deLocale from '@fullcalendar/core/locales/de';
 import './Calendar.css';
 
 const API_URL = 'http://localhost:8000/api';
+const colorPalette = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6610f2', '#e83e8c'];
 
-// Farbpalette für überlappende Termine
-const colorPalette = ['var(--primary)', '#28a745', '#f39c12', '#dc3545', '#17a2b8', '#6f42c1'];
-
-// Funktion zur automatischen Farbzuweisung bei Überschneidungen
 const assignColors = (rawEvents) => {
   const sorted = [...rawEvents].sort((a, b) => new Date(a.start) - new Date(b.start));
   const coloredEvents = [];
@@ -34,231 +31,181 @@ function AdminPage() {
   const [events, setEvents] = useState([]);
   const [mitarbeiter, setMitarbeiter] = useState([]);
   const [autos, setAutos] = useState([]);
-  
-  // Modals Steuerung
+  const [visibleDays, setVisibleDays] = useState("1");
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  
-  // Daten-States
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [newTerminTimes, setNewTerminTimes] = useState({ start: '', end: '', allDay: false });
   const [formData, setFormData] = useState({ title: '', mitarbeiter_id: '', auto_id: '' });
 
-  // Initiales Laden der Daten
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [termineRes, mitarbeiterRes, autosRes] = await Promise.all([
-          fetch(`${API_URL}/termine`),
-          fetch(`${API_URL}/mitarbeiter`),
-          fetch(`${API_URL}/autos`)
+        const [t, m, a, s] = await Promise.all([
+          fetch(`${API_URL}/termine`), fetch(`${API_URL}/mitarbeiter`),
+          fetch(`${API_URL}/autos`), fetch(`${API_URL}/settings`)
         ]);
-        setEvents(assignColors(await termineRes.json()));
-        setMitarbeiter(await mitarbeiterRes.json());
-        setAutos(await autosRes.json());
-      } catch (error) {
-        console.error('Fehler beim Laden:', error);
-      }
+        setEvents(assignColors(await t.json()));
+        setMitarbeiter(await m.json());
+        setAutos(await a.json());
+        const sd = await s.json();
+        if (sd?.visibleDays) setVisibleDays(sd.visibleDays);
+      } catch (e) { console.error(e); }
     };
     fetchData();
   }, []);
 
-  // --- FUNKTIONEN FÜR MITARBEITER & AUTOS ---
-  const addItem = async (type) => {
-    const label = type === 'mitarbeiter' ? 'Mitarbeiter Name' : 'Fahrzeug Name';
-    const name = window.prompt(`${label} hinzufügen:`);
-    if (!name) return;
+  const handleSettingsChange = async (e) => {
+    const v = e.target.value;
+    setVisibleDays(v);
+    await fetch(`${API_URL}/settings`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visibleDays: v })
+    });
+  };
 
-    const newItem = { id: Date.now().toString(), name };
-    try {
-      const res = await fetch(`${API_URL}/${type}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newItem)
-      });
-      if (res.ok) {
-        if (type === 'mitarbeiter') setMitarbeiter([...mitarbeiter, newItem]);
-        else setAutos([...autos, newItem]);
-      }
-    } catch (e) { console.error(e); }
+  const addItem = async (type) => {
+    const name = window.prompt(`${type === 'mitarbeiter' ? 'Mitarbeiter' : 'Fahrzeug'} Name:`);
+    if (!name) return;
+    const item = { id: Date.now().toString(), name };
+    const res = await fetch(`${API_URL}/${type}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item)
+    });
+    if (res.ok) type === 'mitarbeiter' ? setMitarbeiter([...mitarbeiter, item]) : setAutos([...autos, item]);
   };
 
   const deleteItem = async (type, id) => {
-    if (!window.confirm("Eintrag wirklich löschen?")) return;
-    try {
-      const res = await fetch(`${API_URL}/${type}/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        if (type === 'mitarbeiter') setMitarbeiter(mitarbeiter.filter(m => m.id !== id));
-        else setAutos(autos.filter(a => a.id !== id));
-      }
-    } catch (e) { console.error(e); }
-  };
-
-  // --- TERMIN FUNKTIONEN ---
-  const handleDateSelect = (selectInfo) => {
-    setNewTerminTimes({ start: selectInfo.startStr, end: selectInfo.endStr, allDay: selectInfo.allDay });
-    setFormData({ title: '', mitarbeiter_id: '', auto_id: '' });
-    setIsCreateModalOpen(true);
-    selectInfo.view.calendar.unselect();
-  };
-
-  const handleCreateSubmit = async (e) => {
-    e.preventDefault();
-    const newEvent = {
-      id: Date.now().toString(),
-      ...formData,
-      ...newTerminTimes
-    };
-
-    const res = await fetch(`${API_URL}/termine`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newEvent)
-    });
-
-    if (res.ok) {
-      setEvents(prev => assignColors([...prev, newEvent]));
-      setIsCreateModalOpen(false);
+    if (!window.confirm("Löschen?")) return;
+    if ((await fetch(`${API_URL}/${type}/${id}`, { method: 'DELETE' })).ok) {
+      type === 'mitarbeiter' ? setMitarbeiter(mitarbeiter.filter(x => x.id !== id)) : setAutos(autos.filter(x => x.id !== id));
     }
   };
 
-  const handleEventClick = (clickInfo) => {
-    setSelectedEvent(clickInfo.event);
-    setIsDetailModalOpen(true);
+  const renderEventContent = (info) => {
+    const m = mitarbeiter.find(x => x.id === info.event.extendedProps.mitarbeiter_id);
+    const a = autos.find(x => x.id === info.event.extendedProps.auto_id);
+    return (
+      <div style={{ padding: '4px', color: 'white' }}>
+        <div style={{ fontWeight: 'bold', fontSize: '0.85rem' }}>{info.event.title}</div>
+        {m && <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>👤 {m.name}</div>}
+        {a && <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>🚐 {a.name}</div>}
+      </div>
+    );
   };
-
-  const handleDeleteEvent = async () => {
-    if (!window.confirm("Termin löschen?")) return;
-    const res = await fetch(`${API_URL}/termine/${selectedEvent.id}`, { method: 'DELETE' });
-    if (res.ok) {
-      setEvents(prev => assignColors(prev.filter(e => e.id !== selectedEvent.id)));
-      setIsDetailModalOpen(false);
-    }
-  };
-
-  const handleEventChange = async (changeInfo) => {
-    const updated = {
-      id: changeInfo.event.id,
-      title: changeInfo.event.title,
-      start: changeInfo.event.startStr,
-      end: changeInfo.event.endStr || changeInfo.event.startStr,
-      allDay: changeInfo.event.allDay,
-      mitarbeiter_id: changeInfo.event.extendedProps.mitarbeiter_id,
-      auto_id: changeInfo.event.extendedProps.auto_id
-    };
-    setEvents(prev => assignColors(prev.map(e => e.id === updated.id ? updated : e)));
-    await fetch(`${API_URL}/termine/${updated.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updated)
-    });
-  };
-
-  // Helfer für Anzeige
-  const getName = (list, id) => list.find(i => i.id === id)?.name || 'Nicht zugewiesen';
 
   return (
-    <div className="container-fluid">
-      <h2 className="mb-4">Admin-Zentrale</h2>
-      
-      <div className="admin-layout">
-        {/* SIDEBAR */}
-        <div className="admin-sidebar">
-          <div className="sidebar-header">
-            <h3>👤 Mitarbeiter</h3>
-            <button className="btn-add-small" onClick={() => addItem('mitarbeiter')}>+</button>
-          </div>
-          <ul>
-            {mitarbeiter.map(m => (
-              <li key={m.id} className="sidebar-item">
-                <span>👤 {m.name}</span>
-                <button className="btn-delete-icon" onClick={() => deleteItem('mitarbeiter', m.id)}>🗑️</button>
-              </li>
-            ))}
-          </ul>
-
-          <div className="sidebar-header mt-4">
-            <h3>🚐 Fahrzeuge</h3>
-            <button className="btn-add-small" onClick={() => addItem('autos')}>+</button>
-          </div>
-          <ul>
-            {autos.map(a => (
-              <li key={a.id} className="sidebar-item">
-                <span>🚐 {a.name}</span>
-                <button className="btn-delete-icon" onClick={() => deleteItem('autos', a.id)}>🗑️</button>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* KALENDER */}
-        <div className="admin-calendar-wrapper">
-          <div style={{ height: '85vh', backgroundColor: 'var(--surface)', padding: '1rem', borderRadius: '8px' }}>
-            <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-              initialView="timeGridWeek"
-              headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }}
-              locale={deLocale}
-              events={events}
-              editable={true}
-              selectable={true}
-              selectMirror={true}
-              height="100%"
-              slotEventOverlap={false}
-              views={{ dayGridMonth: { eventDisplay: 'block' } }}
-              select={handleDateSelect}
-              eventClick={handleEventClick}
-              eventDrop={handleEventChange}
-              eventResize={handleEventChange}
-            />
-          </div>
+    <div style={{ padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
+        <h1 style={{ fontSize: '1.5rem', margin: 0 }}>Steuerzentrale</h1>
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', background: 'var(--surface)', padding: '10px 20px', borderRadius: '12px' }}>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>TV-Ansicht:</span>
+          <select value={visibleDays} onChange={handleSettingsChange} style={{ background: 'none', color: 'white', border: 'none', fontWeight: 'bold', outline: 'none' }}>
+            {[1, 2, 3, 5].map(d => <option key={d} value={d} style={{background: '#1a1d23'}}>{d} Tage</option>)}
+          </select>
         </div>
       </div>
 
-      {/* MODAL: ERSTELLEN */}
+      <div className="admin-layout">
+        <div className="admin-sidebar">
+          <div className="sidebar-header">
+            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>👤 Mitarbeiter</h3>
+            <button className="btn-edit" style={{padding: '5px 10px'}} onClick={() => addItem('mitarbeiter')}>+</button>
+          </div>
+          {mitarbeiter.map(m => (
+            <div key={m.id} className="sidebar-item">
+              <span>👤 {m.name}</span>
+              <span onClick={() => deleteItem('mitarbeiter', m.id)} style={{color: '#dc3545', cursor: 'pointer'}}>✕</span>
+            </div>
+          ))}
+          <div className="sidebar-header" style={{marginTop: '30px'}}>
+            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>🚐 Fahrzeuge</h3>
+            <button className="btn-edit" style={{padding: '5px 10px'}} onClick={() => addItem('autos')}>+</button>
+          </div>
+          {autos.map(a => (
+            <div key={a.id} className="sidebar-item">
+              <span>🚐 {a.name}</span>
+              <span onClick={() => deleteItem('autos', a.id)} style={{color: '#dc3545', cursor: 'pointer'}}>✕</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ flexGrow: 1 }}>
+          <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView="timeGridWeek"
+            locale={deLocale}
+            weekends={false}
+            allDaySlot={false} // ENTFERNT "GANZTÄGIG"
+            events={events}
+            eventContent={renderEventContent}
+            editable={true} selectable={true} height="calc(100vh - 150px)"
+            headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }}
+            select={(info) => {
+              setNewTerminTimes({ start: info.startStr, end: info.endStr, allDay: false });
+              setFormData({ title: '', mitarbeiter_id: '', auto_id: '' });
+              setIsCreateModalOpen(true);
+            }}
+            eventClick={(info) => { setSelectedEvent(info.event); setIsDetailModalOpen(true); }}
+            eventDrop={async (info) => {
+              const up = { id: info.event.id, title: info.event.title, start: info.event.startStr, end: info.event.endStr || info.event.startStr, allDay: false, mitarbeiter_id: info.event.extendedProps.mitarbeiter_id, auto_id: info.event.extendedProps.auto_id };
+              setEvents(prev => assignColors(prev.map(e => e.id === up.id ? up : e)));
+              await fetch(`${API_URL}/termine/${up.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(up) });
+            }}
+          />
+        </div>
+      </div>
+
       {isCreateModalOpen && (
         <div className="modal-overlay" onClick={() => setIsCreateModalOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>Neuer Termin</h3>
-            <form onSubmit={handleCreateSubmit}>
-              <div className="form-group">
-                <label>Titel</label>
-                <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label>Mitarbeiter</label>
-                <select value={formData.mitarbeiter_id} onChange={e => setFormData({...formData, mitarbeiter_id: e.target.value})}>
-                  <option value="">-- Wählen --</option>
-                  {mitarbeiter.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Fahrzeug</label>
-                <select value={formData.auto_id} onChange={e => setFormData({...formData, auto_id: e.target.value})}>
-                  <option value="">-- Wählen --</option>
-                  {autos.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                </select>
-              </div>
-              <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={() => setIsCreateModalOpen(false)}>Abbrechen</button>
-                <button type="submit" className="btn-edit">Speichern</button>
-              </div>
-            </form>
+            <h2 style={{marginTop: 0}}>Neuer Termin</h2>
+            <div className="form-group">
+              <label>Bezeichnung</label>
+              <input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+            </div>
+            <div className="form-group">
+              <label>Mitarbeiter</label>
+              <select value={formData.mitarbeiter_id} onChange={e => setFormData({...formData, mitarbeiter_id: e.target.value})}>
+                <option value="">Nicht zugewiesen</option>
+                {mitarbeiter.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Fahrzeug</label>
+              <select value={formData.auto_id} onChange={e => setFormData({...formData, auto_id: e.target.value})}>
+                <option value="">Nicht zugewiesen</option>
+                {autos.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+            </div>
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={() => setIsCreateModalOpen(false)}>Abbruch</button>
+              <button className="btn-edit" onClick={async () => {
+                const n = { id: Date.now().toString(), ...formData, ...newTerminTimes, allDay: false };
+                const res = await fetch(`${API_URL}/termine`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(n) });
+                if (res.ok) { setEvents(assignColors([...events, n])); setIsCreateModalOpen(false); }
+              }}>Speichern</button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* MODAL: DETAILS */}
       {isDetailModalOpen && selectedEvent && (
         <div className="modal-overlay" onClick={() => setIsDetailModalOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>Termin-Details</h3>
-            <p><strong>Titel:</strong> {selectedEvent.title}</p>
-            <p><strong>Mitarbeiter:</strong> {getName(mitarbeiter, selectedEvent.extendedProps.mitarbeiter_id)}</p>
-            <p><strong>Fahrzeug:</strong> {getName(autos, selectedEvent.extendedProps.auto_id)}</p>
+            <h2 style={{marginTop: 0}}>Termin Details</h2>
+            <p><strong>Was:</strong> {selectedEvent.title}</p>
+            <p><strong>Wer:</strong> 👤 {mitarbeiter.find(x => x.id === selectedEvent.extendedProps.mitarbeiter_id)?.name || 'Keiner'}</p>
+            <p><strong>Auto:</strong> 🚐 {autos.find(x => x.id === selectedEvent.extendedProps.auto_id)?.name || 'Keins'}</p>
             <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setIsDetailModalOpen(false)} style={{marginRight: 'auto'}}>Schließen</button>
-              <button className="btn-delete" onClick={handleDeleteEvent}>Löschen</button>
+              <button className="btn-delete" onClick={async () => {
+                if (window.confirm("Löschen?")) {
+                  await fetch(`${API_URL}/termine/${selectedEvent.id}`, { method: 'DELETE' });
+                  setEvents(assignColors(events.filter(e => e.id !== selectedEvent.id)));
+                  setIsDetailModalOpen(false);
+                }
+              }}>Löschen</button>
+              <button className="btn-cancel" onClick={() => setIsDetailModalOpen(false)}>Schließen</button>
             </div>
           </div>
         </div>
