@@ -4,6 +4,8 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 app = FastAPI()
 
@@ -157,3 +159,11 @@ async def update_settings(settings: dict):
     write_json("settings.json", current)
     await manager.broadcast("update")
     return current
+
+# --- REACT FRONTEND SERVIEREN ---
+# WICHTIG: Muss ganz unten stehen!
+app.mount("/", StaticFiles(directory="dist", html=True), name="static")
+
+@app.exception_handler(404)
+async def custom_404_handler(request, exc):
+    return FileResponse('dist/index.html')
