@@ -56,6 +56,7 @@ class Termin(BaseModel):
     allDay: Optional[bool] = False
     mitarbeiter_id: Optional[str] = None
     auto_id: Optional[str] = None
+    beschreibung: Optional[str] = ""  # <--- NEU: Backend akzeptiert jetzt die Beschreibung
 
 # --- WEBSOCKET ENDPUNKT ---
 @app.websocket("/ws")
@@ -140,11 +141,19 @@ def get_settings():
     settings = read_json("settings.json")
     # Standardwert, falls Datei leer oder neu
     if not settings:
-        return {"visibleDays": "1"} 
+        return {"visibleDays": "1", "theme": "light"} 
     return settings
 
+# Wurde repariert: Vorher gab es diese Route doppelt
 @app.post("/api/settings")
 async def update_settings(settings: dict):
-    write_json("settings.json", settings)
-    await manager.broadcast("update") # TV sofort informieren
-    return settings
+    # Lade aktuelle Settings, falls vorhanden
+    if isinstance(read_json("settings.json"), dict):
+        current = read_json("settings.json")
+    else:
+        current = {}
+        
+    current.update(settings) # Merged neue Einstellungen (Tage & Theme)
+    write_json("settings.json", current)
+    await manager.broadcast("update")
+    return current

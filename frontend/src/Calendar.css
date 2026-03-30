@@ -1,164 +1,547 @@
-/* --- GLOBAL DESIGN --- */
+/* --- 1. ODOO COLOR VARIABLES --- */
 :root {
-  --background: #0f1114;
-  --surface: #1a1d23;
-  --surface-bright: #242931;
-  --primary: #007bff;
-  --primary-glow: rgba(0, 123, 255, 0.4);
-  --border-color: rgba(255, 255, 255, 0.08);
-  --text-main: #ffffff;
-  --text-muted: #a0aec0;
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Odoo Dark Mode */
+  --background: #111827;
+  --surface: #1f2937;
+  --surface-bright: #374151;
+  --border-color: #4b5563;
+  --text-main: #f9fafb;
+  --text-muted: #9ca3af;
+  
+  /* Primary Odoo Blue/Teal */
+  --primary: #017e84; 
+  --primary-hover: #01666b;
+  
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+body.light-theme {
+  /* Odoo Light Mode */
+  --background: #f9f9f9;
+  --surface: #ffffff;
+  --surface-bright: #f1f3f5;
+  --border-color: #e5e7eb;
+  --text-main: #111827 !important;
+  --text-muted: #6b7280 !important;
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 body {
   background-color: var(--background);
   color: var(--text-main);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-family: 'Inter', system-ui, sans-serif;
   margin: 0;
-  font-family: var(--font-family);
 }
 
-/* --- FULLCALENDAR CHARAKTER TWEAKS --- */
-.fc {
-  --fc-page-bg-color: var(--background);
-  --fc-neutral-bg-color: var(--surface);
-  --fc-border-color: var(--border-color);
-  background: var(--surface);
-  border-radius: 12px;
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
-/* Toolbar & Buttons */
-.fc .fc-toolbar {
-  padding: 20px !important;
-  margin-bottom: 0 !important;
-  background: linear-gradient(to bottom, var(--surface-bright), var(--surface));
+/* --- 2. GLOBAL TEXT FIX FÜR LIGHTMODE --- */
+body.light-theme .fc, 
+body.light-theme .fc-toolbar-title, 
+body.light-theme .fc-col-header-cell-cushion, 
+body.light-theme .fc-timegrid-slot-label-cushion, 
+body.light-theme .sidebar-header h3, 
+body.light-theme .header-logo, 
+body.light-theme .sidebar-item span,
+body.light-theme .modal-title,
+body.light-theme .form-group label,
+body.light-theme .detail-row,
+body.light-theme .popover-title,
+body.light-theme .popover-detail-row {
+  color: #111827 !important;
+}
+
+/* --- 3. HEADER & CONTROLS --- */
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--surface);
   border-bottom: 1px solid var(--border-color);
-}
-
-.fc .fc-toolbar-title {
-  font-size: 1.4rem !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.5px;
-}
-
-.fc .fc-button {
-  background: var(--surface-bright) !important;
-  border: 1px solid var(--border-color) !important;
-  color: var(--text-main) !important;
-  font-weight: 600 !important;
-  text-transform: uppercase !important;
-  font-size: 0.75rem !important;
-  letter-spacing: 0.5px !important;
-  padding: 8px 16px !important;
-  transition: all 0.2s ease !important;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-}
-
-.fc .fc-button:hover {
-  background: var(--primary) !important;
-  border-color: var(--primary) !important;
-  transform: translateY(-1px);
-}
-
-.fc .fc-button-active {
-  background: var(--primary) !important;
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 15px var(--primary-glow) !important;
-}
-
-/* Kalender Grid */
-.fc th {
-  background: var(--surface-bright) !important;
-  padding: 12px 0 !important;
-  font-weight: 600 !important;
-  font-size: 0.85rem !important;
-  color: var(--text-muted) !important;
-  text-transform: uppercase;
-}
-
-.fc-timegrid-slot {
-  height: 50px !important; /* Mehr Platz für Termine */
-  border-bottom: 1px solid rgba(255,255,255,0.03) !important;
-}
-
-.fc .fc-timegrid-slot-label-cushion {
-  font-size: 0.8rem !important;
-  color: var(--text-muted);
-}
-
-/* Events mit Charakter */
-.fc-v-event {
-  border: none !important;
-  border-radius: 6px !important;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
-  transition: transform 0.1s ease;
-}
-
-.fc-v-event:hover {
-  transform: scale(1.02);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   z-index: 10;
 }
 
-/* TV & FULLSCREEN WRAPPER */
-.tv-screen-wrapper {
-  position: fixed;
-  inset: 0;
-  background: var(--background);
-  z-index: 9999;
+.header-logo-container {
+  display: flex;
+  flex-direction: column;
 }
 
-.tv-calendar-content {
-  height: 100vh;
-  padding: 0;
+.header-logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-main);
+  line-height: 1.1;
+  letter-spacing: -0.5px;
 }
 
-/* --- ADMIN SIDEBAR --- */
+.header-subtitle {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tv-select-box {
+  display: flex;
+  align-items: center;
+  background: var(--surface-bright);
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.tv-select-box select {
+  background: none;
+  border: none;
+  color: var(--text-main);
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+/* --- 4. ADMIN LAYOUT & SIDEBAR --- */
 .admin-layout {
   display: flex;
-  gap: 25px;
-  padding: 20px;
-  height: calc(100vh - 80px);
+  flex: 1;
+  overflow: hidden;
 }
 
 .admin-sidebar {
   width: 280px;
-  background: var(--surface);
-  border-radius: 12px;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--background);
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
+}
+
+.sidebar-group-box {
+  background: var(--surface);
   border: 1px solid var(--border-color);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: var(--shadow);
 }
 
 .sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.sidebar-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
 }
 
 .sidebar-item {
   display: flex;
   justify-content: space-between;
-  padding: 10px 12px;
+  align-items: center;
+  padding: 8px 12px;
   background: var(--surface-bright);
-  border-radius: 8px;
-  margin-bottom: 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
   border: 1px solid transparent;
-  transition: border 0.2s;
 }
 
-.sidebar-item:hover {
+.btn-add-square {
+  background: var(--primary);
+  color: white !important;
+  border: none;
+  width: 24px; 
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: background 0.2s;
+}
+
+.btn-add-square:hover { background: var(--primary-hover); }
+.delete-x { color: #dc3545; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+
+/* --- 5. FULLCALENDAR & BUTTONS (ODOO STYLE) --- */
+.calendar-main-container {
+  flex: 1;
+  background: var(--surface);
+  padding: 15px;
+  overflow: hidden;
+}
+
+.fc {
+  background: var(--surface) !important;
+  border: none !important;
+}
+
+.fc td, .fc th { border-color: var(--border-color) !important; }
+
+.fc .fc-button-primary {
+  background-color: var(--surface-bright) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+  text-transform: capitalize !important;
+  box-shadow: none !important;
+  font-weight: 500 !important;
+  border-radius: 4px !important;
+}
+
+.fc .fc-button-primary:hover {
+  background-color: var(--border-color) !important;
+}
+
+.fc .fc-button-primary:not(:disabled):active,
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #ffffff !important;
+}
+
+/* --- 6. TERMINE (EVENTS) --- */
+.event-card-body, .event-card-body-tv {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 4px 8px;
+  color: #ffffff !important;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.event-card-title { font-weight: 700; font-size: 0.8rem; margin-bottom: 2px; }
+.event-card-meta { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.2); paddingTop: 4px; }
+
+/* --- 7. TOGGLE SWITCH --- */
+.theme-switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+.theme-switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background-color: #cbd5e1; transition: .4s; border-radius: 22px;
+}
+.slider:before {
+  position: absolute; content: ""; height: 16px; width: 16px;
+  left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+input:checked + .slider { background-color: var(--primary); }
+input:checked + .slider:before { transform: translateX(22px); }
+body:not(.light-theme) .slider { background-color: #4b5563; }
+
+
+/* --- 8. TV VOLLBILD (ODOO DIGITAL SIGNAGE) --- */
+.tv-screen-wrapper { 
+  position: fixed; 
+  inset: 0; 
+  background-color: var(--background); 
+  z-index: 9999; 
+  display: flex;
+  flex-direction: column;
+}
+
+/* Die Kopfzeile der TV Ansicht */
+.tv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+.tv-logo { 
+  font-size: 1.3rem !important; 
+  margin: 0;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.tv-subtitle { 
+  font-size: 0.65rem !important; 
+  letter-spacing: 0.5px; 
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Dezentere Uhrzeit */
+.tv-clock {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-main); /* Weiß im Darkmode, Dunkelgrau im Lightmode */
+  font-variant-numeric: tabular-nums; 
+}
+
+/* Der Kalender-Bereich */
+.tv-calendar-content { 
+  flex: 1; 
+  padding: 20px 24px; 
+  overflow: hidden;
+}
+
+/* Der Kalender als schwebende Karte */
+.tv-calendar-content .fc {
+  background: var(--surface) !important;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 15px 20px;
+  height: 100% !important;
+}
+
+/* --- FIX FÜR DAS MATSCHIGE GRÜN --- */
+/* FullCalendar hebt den aktuellen Tag standardmäßig gelb/grünlich hervor. Wir machen das Odoo-konform. */
+.fc .fc-day-today {
+  background-color: var(--surface-bright) !important;
+}
+.tv-calendar-content .fc td, 
+.tv-calendar-content .fc th {
+  border-color: var(--border-color) !important;
+}
+
+/* Typografie im Kalender anpassen */
+.tv-calendar-content .fc-toolbar-title { 
+  font-size: 1.4rem !important; 
+  font-weight: 700; 
+  padding: 0 0 15px 0 !important;
+  color: var(--text-main);
+}
+
+.tv-calendar-content .fc-col-header-cell-cushion {
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted) !important;
+}
+
+.tv-calendar-content .fc-timegrid-slot-label-cushion {
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding-right: 12px !important;
+  color: var(--text-muted);
+}
+
+/* Die rote "Jetzt"-Linie elegant und dünn */
+.tv-calendar-content .fc-timegrid-now-indicator-line {
+  border-color: #e74a3b !important;
+  border-width: 2px !important;
+}
+.tv-calendar-content .fc-timegrid-now-indicator-arrow {
+  border-width: 5px !important;
+  border-color: #e74a3b !important;
+}
+
+/* Termine auf dem TV anpassen */
+.event-card-body-tv {
+  padding: 6px 10px;
+}
+
+.event-card-title-tv { 
+  font-weight: 700; 
+  font-size: 1rem; 
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.tv-meta-row {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Lightmode Text-Fix speziell für die TV-Ansicht ergänzen */
+body.light-theme .tv-clock { color: #111827 !important; }
+
+
+
+/* --- 9. ODOO POPOVER (KLICK-KÄSTCHEN) --- */
+.odoo-popover-card {
+  position: fixed;
+  z-index: 9995;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  animation: popoverFadeIn 0.15s ease-out forwards;
+}
+
+.popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 16px;
+  background: var(--surface-bright);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 6px 6px 0 0;
+}
+
+.popover-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+.popover-close {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+.popover-close:hover { color: #e74a3b; }
+
+.popover-body {
+  padding: 16px;
+}
+
+.popover-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-main);
+  margin-bottom: 10px;
+}
+.popover-detail-row:last-child { margin-bottom: 0; }
+
+.popover-icon {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.popover-form-group {
+  margin-top: 15px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.popover-form-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.popover-textarea {
+  padding: 8px;
+  background: var(--surface-bright);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-main);
+  font-weight: 500;
+  font-size: 0.85rem;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.4;
+}
+.popover-textarea:focus {
+  outline: none;
   border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(1, 126, 132, 0.2);
 }
 
-/* --- MODALS --- */
+.popover-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  background: var(--surface-bright);
+  border-radius: 0 0 6px 6px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-save-popover {
+  background: var(--primary);
+  color: white !important;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+.btn-save-popover:hover { background: var(--primary-hover); }
+
+.btn-delete-popover {
+  background: #e74a3b;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+.btn-delete-popover:hover { background: #c0392b; }
+
+body.light-theme .popover-form-label { color: var(--text-muted) !important; }
+body.light-theme .popover-textarea {
+  color: #111827 !important;
+  background: #fdfdfd;
+  border-color: #cbd5e1;
+}
+
+@keyframes popoverFadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- 10. MODALS (FÜR "NEUER TERMIN") --- */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.85);
-  backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -167,30 +550,244 @@ body {
 
 .modal-content {
   background: var(--surface);
+  padding: 24px;
+  border-radius: 8px;
+  width: 380px;
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 30px;
-  width: 400px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow);
+}
+
+.form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+.form-group label { font-size: 0.85rem; font-weight: 700; margin-bottom: 5px; color: var(--text-muted); }
+.form-group input, .form-group select {
+  padding: 10px; background: var(--surface-bright); border: 1px solid var(--border-color);
+  border-radius: 4px; color: var(--text-main); font-weight: 500;
+}
+
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.btn-edit { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; }
+.btn-cancel { background: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+
+/* --- 9. ODOO POPOVER (KLICK-KÄSTCHEN) --- */
+.odoo-popover-card {
+  position: fixed;
+  z-index: 9995;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  animation: popoverFadeIn 0.15s ease-out forwards;
+}
+
+.popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 16px;
+  background: var(--surface-bright);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 6px 6px 0 0;
+}
+
+.popover-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+.popover-close {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+.popover-close:hover { color: #e74a3b; }
+
+.popover-body {
+  padding: 16px;
+}
+
+.popover-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-main);
+  margin-bottom: 10px;
+}
+.popover-detail-row:last-child { margin-bottom: 0; }
+
+.popover-icon {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.popover-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  background: var(--surface-bright);
+  border-radius: 0 0 6px 6px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-delete-popover {
+  background: #e74a3b;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+.btn-delete-popover:hover { background: #c0392b; }
+
+@keyframes popoverFadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- 10. MODALS (FÜR "NEUER TERMIN") --- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.modal-content {
+  background: var(--surface);
+  padding: 24px;
+  border-radius: 8px;
+  width: 380px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+}
+
+.form-group {
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 8px;
   font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 5px;
   color: var(--text-muted);
 }
 
 .form-group input, .form-group select {
-  width: 100%;
-  padding: 12px;
-  background: var(--background);
+  padding: 10px;
+  background: var(--surface-bright);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  color: white;
-  margin-bottom: 15px;
+  border-radius: 4px;
+  color: var(--text-main);
+  font-weight: 500;
 }
 
-.btn-edit { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-.btn-cancel { background: transparent; color: white; border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-.btn-delete { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-edit { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; }
+.btn-cancel { background: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+
+/* --- 9. ODOO POPOVER ENHANCEMENTS (FORMS) --- */
+
+/* Popover etwas breiter machen, damit Formularfelder Platz haben */
+.odoo-popover-card.popover-with-form {
+  width: 280px; 
+}
+
+/* Container für das Beschreibungsfeld */
+.popover-form-group {
+  margin-top: 15px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Odoo-Label Style */
+.popover-form-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Odoo-Textarea Style */
+.popover-textarea {
+  padding: 8px;
+  background: var(--surface-bright);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-main);
+  font-weight: 500;
+  font-size: 0.85rem;
+  resize: vertical; /* Erlaubt vertikales Resizing */
+  font-family: inherit; /* Nutzt 'Inter' */
+  line-height: 1.4;
+}
+
+.popover-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(1, 126, 132, 0.2); /* Sanfter Odoo-Glow */
+}
+
+/* Odoo-Primary Button Style für Speichern */
+.btn-save-popover {
+  background: var(--primary);
+  color: white !important;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+
+.btn-save-popover:hover { background: var(--primary-hover); }
+
+/* Footer-Layout anpassen: Speichern links, Löschen rechts */
+.popover-footer {
+  justify-content: flex-end; /* Buttons rechtsbündig */
+  gap: 10px; /* Abstand zwischen Speichern und Löschen */
+}
+
+/* Lightmode-Spezifische Anpassungen für das Formular */
+body.light-theme .popover-form-label {
+  color: var(--text-muted) !important;
+}
+
+body.light-theme .popover-textarea {
+  color: #111827 !important;
+  background: #fdfdfd; /* Sehr hell für Textareas */
+  border-color: #cbd5e1;
+}

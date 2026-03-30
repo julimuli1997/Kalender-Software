@@ -1,28 +1,23 @@
 import { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
-import timeGridPlugin from '@fullcalendar/timegrid';
+import timegridPlugin from '@fullcalendar/timegrid';
 import deLocale from '@fullcalendar/core/locales/de';
 import './Calendar.css';
 
 const API_URL = 'http://localhost:8000/api';
-const colorPalette = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6610f2', '#e83e8c'];
 
-const assignColors = (rawEvents) => {
-  const sorted = [...rawEvents].sort((a, b) => new Date(a.start) - new Date(b.start));
-  const coloredEvents = [];
-  sorted.forEach(event => {
-    const overlapping = coloredEvents.filter(e => {
-      const startA = new Date(event.start);
-      const endA = new Date(event.end || event.start);
-      const startB = new Date(e.start);
-      const endB = new Date(e.end || e.start);
-      return startB < endA && endB > startA; 
-    });
-    const usedColors = overlapping.map(e => e.backgroundColor);
-    const availableColor = colorPalette.find(color => !usedColors.includes(color)) || colorPalette[0];
-    coloredEvents.push({ ...event, backgroundColor: availableColor, borderColor: availableColor });
+const odooColors = ['#017e84', '#b05c38', '#875a7b', '#21b799', '#3b7ebf', '#e4a900', '#d83232', '#8f8f8f'];
+
+const assignColors = (rawEvents, mitarbeiterList) => {
+  const colorMap = {};
+  mitarbeiterList.forEach((m, index) => {
+    colorMap[m.id] = odooColors[index % odooColors.length];
   });
-  return coloredEvents;
+
+  return rawEvents.map(event => {
+    const color = colorMap[event.mitarbeiter_id] || '#6c757d';
+    return { ...event, backgroundColor: color, borderColor: color };
+  });
 };
 
 function KalenderPage() {
@@ -30,6 +25,13 @@ function KalenderPage() {
   const [mitarbeiter, setMitarbeiter] = useState([]);
   const [autos, setAutos] = useState([]);
   const [visibleDays, setVisibleDays] = useState(1);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Live-Uhr für das TV-Dashboard
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,70 +40,71 @@ function KalenderPage() {
           fetch(`${API_URL}/termine`), fetch(`${API_URL}/mitarbeiter`),
           fetch(`${API_URL}/autos`), fetch(`${API_URL}/settings`)
         ]);
-        setEvents(assignColors(await t.json()));
-        setMitarbeiter(await m.json());
+        const mData = await m.json();
+        const tData = await t.json();
+
+        setMitarbeiter(mData);
+        setEvents(assignColors(tData, mData));
         setAutos(await a.json());
+
         const sd = await s.json();
         if (sd?.visibleDays) setVisibleDays(parseInt(sd.visibleDays));
+        if (sd?.theme === 'light') document.body.classList.add('light-theme');
+        else document.body.classList.remove('light-theme');
       } catch (e) { console.error(e); }
     };
+    
     fetchData();
-
     const ws = new WebSocket('ws://localhost:8000/ws');
     ws.onmessage = (e) => e.data === "update" && fetchData();
     return () => ws.close();
   }, []);
 
-  useEffect(() => {
-    let scrollInterval;
-    const startScrolling = () => {
-      const scrollers = document.querySelectorAll('.fc-scroller');
-      const scroller = scrollers.length > 1 ? scrollers[1] : scrollers[0];
-      if (!scroller || scroller.scrollHeight <= scroller.clientHeight) return;
-      scrollInterval = setInterval(() => {
-        if (scroller.scrollTop + scroller.clientHeight + 1 >= scroller.scrollHeight) {
-          clearInterval(scrollInterval);
-          setTimeout(() => {
-            scroller.scrollTo({ top: 0, behavior: 'smooth' });
-            setTimeout(startScrolling, 4000);
-          }, 4000);
-        } else {
-          scroller.scrollTop += 1;
-        }
-      }, 50); 
-    };
-    const tId = setTimeout(startScrolling, 3000);
-    return () => { clearInterval(scrollInterval); clearTimeout(tId); };
-  }, [events, visibleDays]);
-
-  const renderEventContent = (info) => {
-    const m = mitarbeiter.find(x => x.id === info.event.extendedProps.mitarbeiter_id);
-    const a = autos.find(x => x.id === info.event.extendedProps.auto_id);
-    return (
-      <div style={{ padding: '8px', color: 'white' }}>
-        <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{info.event.title}</div>
-        {m && <div style={{ fontSize: '0.9rem', marginTop: '4px' }}>👤 {m.name}</div>}
-        {a && <div style={{ fontSize: '0.9rem' }}>🚐 {a.name}</div>}
+  const renderEventContent = (info) => (
+    <div className="event-card-body-tv">
+      <div className="event-card-title-tv">{info.event.title}</div>
+      <div className="event-card-meta-tv" style={{marginTop:'auto', borderTop:'1px solid rgba(255,255,255,0.2)', paddingTop:'8px'}}>
+        <div className="tv-meta-row">👤 {mitarbeiter.find(x => x.id === info.event.extendedProps.mitarbeiter_id)?.name || '-'}</div>
+        <div className="tv-meta-row">🚐 {autos.find(x => x.id === info.event.extendedProps.auto_id)?.name || '-'}</div>
+        {/* Falls es eine Beschreibung gibt, wird sie auf dem TV dezent angedeutet */}
+        {info.event.extendedProps.beschreibung && (
+          <div className="tv-meta-row" style={{opacity: 0.8, marginTop: '4px'}}>
+            📝 {info.event.extendedProps.beschreibung}
+          </div>
+        )}
       </div>
-    );
-  };
+    </div>
+  );
 
   return (
     <div className="tv-screen-wrapper">
+      {/* NEUER TV HEADER */}
+      <div className="tv-header">
+        <div className="header-logo-container">
+          <h2 className="header-logo tv-logo">BTL-Kalender</h2>
+          <span className="header-subtitle tv-subtitle">J.O Design ™ • TV-Dashboard</span>
+        </div>
+        <div className="tv-clock">
+          {currentTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
+        </div>
+      </div>
+
       <div className="tv-calendar-content">
         <FullCalendar
           key={visibleDays}
-          plugins={[timeGridPlugin]}
+          plugins={[timegridPlugin]}
           initialView={visibleDays === 1 ? 'timeGridDay' : 'timeGridCustom'}
           views={{ timeGridCustom: { type: 'timeGrid', duration: { days: visibleDays } } }}
           locale={deLocale}
           weekends={false}
-          allDaySlot={false} // ENTFERNT "GANZTÄGIG"
+          allDaySlot={false}
           events={events}
           eventContent={renderEventContent}
           headerToolbar={{ left: '', center: 'title', right: '' }}
-          slotMinTime="05:00:00" slotMaxTime="24:00:00"
-          height="100%" nowIndicator={true}
+          slotMinTime="06:00:00" slotMaxTime="18:00:00"
+          height="100%" expandRows={true}
+          nowIndicator={true}
+          eventDisplay="block"
         />
       </div>
     </div>
