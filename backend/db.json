@@ -1,32 +1,5 @@
 [
     {
-        "id": "1774597992694",
-        "title": "zu Frau Klees",
-        "start": "2026-03-27T07:30:00+01:00",
-        "end": "2026-03-27T10:00:00+01:00",
-        "allDay": false,
-        "mitarbeiter_id": "m3",
-        "auto_id": "a3"
-    },
-    {
-        "id": "1774598042761",
-        "title": "zu Peter mainfad",
-        "start": "2026-03-27T07:00:00+01:00",
-        "end": "2026-03-27T11:00:00+01:00",
-        "allDay": false,
-        "mitarbeiter_id": "m2",
-        "auto_id": "a3"
-    },
-    {
-        "id": "1774604918401",
-        "title": "Frau Daum bettliegerich",
-        "start": "2026-04-01",
-        "end": "2026-04-04",
-        "allDay": true,
-        "mitarbeiter_id": "m2",
-        "auto_id": "a3"
-    },
-    {
         "id": "1774613521288",
         "title": "Viktor zu Rhein",
         "start": "2026-09-02T06:00:00+02:00",
@@ -34,15 +7,6 @@
         "allDay": false,
         "mitarbeiter_id": "1774613506220",
         "auto_id": "a2"
-    },
-    {
-        "id": "1774613598521",
-        "title": "kgu",
-        "start": "2026-03-27T06:30:00+01:00",
-        "end": "2026-03-27T12:00:00+01:00",
-        "allDay": false,
-        "mitarbeiter_id": "",
-        "auto_id": ""
     },
     {
         "id": "1774637342200",
@@ -54,13 +18,13 @@
         "auto_id": "a1"
     },
     {
-        "id": "1774873915630",
-        "title": "hallo",
-        "start": "2026-03-30T06:30:00+02:00",
-        "end": "2026-03-30T10:30:00+02:00",
+        "id": "1774951234477",
+        "title": "Ich bin ein Test",
+        "start": "2026-03-31T07:00:00+02:00",
+        "end": "2026-03-31T10:00:00+02:00",
         "allDay": false,
-        "mitarbeiter_id": "",
-        "auto_id": "",
-        "beschreibung": "hallo "
+        "mitarbeiter_id": "1774608907073",
+        "auto_id": "a2",
+        "beschreibung": ""
     }
 ]
