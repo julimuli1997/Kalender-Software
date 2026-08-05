@@ -161,9 +161,42 @@ async def update_settings(settings: dict):
     return current
 
 # --- REACT FRONTEND SERVIEREN ---
-# WICHTIG: Muss ganz unten stehen!
 app.mount("/", StaticFiles(directory="dist", html=True), name="static")
 
 @app.exception_handler(404)
 async def custom_404_handler(request, exc):
     return FileResponse('dist/index.html')
+
+# --- SERVER START FÜR PYINSTALLER ---
+import uvicorn
+import multiprocessing
+import traceback
+import sys
+import os
+import webbrowser
+import threading
+
+def open_browser():
+    webbrowser.open("http://localhost:8000")
+
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    
+    # --- DER NOCONSOLE FIX ---
+    # Wenn Windows das Terminal versteckt, geben wir Python "blinde" Ausgänge, 
+    # damit Uvicorn nicht beim Versuch zu drucken abstürzt.
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, "w")
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, "w")
+    if sys.stdin is None:
+        sys.stdin = open(os.devnull, "r")
+        
+    try:
+        threading.Timer(1.5, open_browser).start()
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+        
+    except Exception as e:
+        with open("crash_log.txt", "w", encoding="utf-8") as f:
+            f.write(traceback.format_exc())
+        # Wir lassen das input() hier absichtlich weg, da wir eh kein Terminal mehr haben!
