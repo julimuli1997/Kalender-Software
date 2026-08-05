@@ -16,6 +16,7 @@
         "allDay": false,
         "mitarbeiter_id": "m2",
         "auto_id": "a1"
+<<<<<<< HEAD
     },
     {
         "id": "1774951234477",
@@ -26,5 +27,7 @@
         "mitarbeiter_id": "1774608907073",
         "auto_id": "a2",
         "beschreibung": ""
+=======
+>>>>>>> 5982d797c7e5b24163517bec22cdd5fc8a800438
     }
 ]
