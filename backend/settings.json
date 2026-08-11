@@ -1,4 +1,5 @@
 {
     "theme": "dark",
-    "visibleDays": "3"
+    "visibleDays": "3",
+    "networkMode": "localhost"
 }
