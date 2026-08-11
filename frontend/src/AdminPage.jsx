@@ -177,8 +177,8 @@ function AdminPage() {
       {/* HEADER */}
       <div className="admin-header">
         <div className="header-logo-container">
-          <h2 className="header-logo">BTL-Kalender</h2>
-          <span className="header-subtitle">J.O Design ™</span>
+          <h2 className="header-logo">Stürtz Heizung und Sanitär GmbH Kalender</h2>
+          <span className="header-subtitle">BTL-Digital Design™</span>
         </div>
         
         <div className="header-controls">
