@@ -4,6 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timegridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import deLocale from '@fullcalendar/core/locales/de';
+import SettingsPanel from './SettingsPanel';
 import './Calendar.css';
 
 const API_URL = 'http://localhost:8000/api';
@@ -28,7 +29,10 @@ function AdminPage() {
   const [autos, setAutos] = useState([]);
   const [visibleDays, setVisibleDays] = useState("1");
   const [theme, setTheme] = useState('light');
-  
+  const [networkMode, setNetworkMode] = useState('localhost');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTerminTimes, setNewTerminTimes] = useState({ start: '', end: '', allDay: false });
   const [formData, setFormData] = useState({ title: '', mitarbeiter_id: '', auto_id: '' });
@@ -50,6 +54,24 @@ function AdminPage() {
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Localhost guard: check networkMode and current hostname
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        const res = await fetch(`${API_URL}/network-info`);
+        const data = await res.json();
+        const mode = data.networkMode || 'localhost';
+        setNetworkMode(mode);
+        const hostname = window.location.hostname;
+        const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+        if (mode === 'localhost' && !isLocal) {
+          setAccessDenied(true);
+        }
+      } catch (e) { /* silently ignore */ }
+    };
+    checkAccess();
   }, []);
 
   useEffect(() => {
@@ -172,8 +194,37 @@ function AdminPage() {
     return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Access denied screen
+  if (accessDenied) {
+    return (
+      <div className="access-denied-screen">
+        <div className="access-denied-card">
+          <div className="access-denied-icon">🔒</div>
+          <h2 className="access-denied-title">Zugriff verweigert</h2>
+          <p className="access-denied-desc">
+            Die Admin-Seite ist nur auf dem lokalen Gerät zugänglich.<br />
+            Bitte öffnen Sie die Seite direkt auf dem Server-PC.
+          </p>
+          <div className="access-denied-hint">
+            <span>Tipp: Der Administrator kann den Netzwerkzugriff in den Einstellungen aktivieren.</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
+      {/* SETTINGS PANEL */}
+      <SettingsPanel
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        theme={theme}
+        onThemeChange={toggleTheme}
+        visibleDays={visibleDays}
+        onVisibleDaysChange={handleSettingsChange}
+      />
+
       {/* HEADER */}
       <div className="admin-header">
         <div className="header-logo-container">
@@ -182,18 +233,14 @@ function AdminPage() {
         </div>
         
         <div className="header-controls">
-          <div className="theme-switch-wrapper">
-            <span>{theme === 'dark' ? '🌙' : '☀️'}</span>
-            <label className="theme-switch">
-              <input type="checkbox" checked={theme === 'light'} onChange={toggleTheme} />
-              <span className="slider"></span>
-            </label>
-          </div>
-          <div className="tv-select-box">
-            <select value={visibleDays} onChange={handleSettingsChange}>
-              {[1, 2, 3, 5].map(d => <option key={d} value={d}>{d} Tage</option>)}
-            </select>
-          </div>
+          <button
+            id="settings-gear-btn"
+            className="settings-gear-btn"
+            onClick={() => setIsSettingsOpen(true)}
+            title="Einstellungen"
+          >
+            ⚙️
+          </button>
         </div>
       </div>
 

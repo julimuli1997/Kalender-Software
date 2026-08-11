@@ -791,3 +791,350 @@ body.light-theme .popover-textarea {
   background: #fdfdfd; /* Sehr hell für Textareas */
   border-color: #cbd5e1;
 }
+
+/* ============================================================
+   SETTINGS GEAR BUTTON
+   ============================================================ */
+.settings-gear-btn {
+  background: var(--surface-bright);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 1.15rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-main);
+  font-weight: 600;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  line-height: 1;
+}
+.settings-gear-btn:hover {
+  background: var(--border-color);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transform: scale(1.05);
+}
+.settings-gear-btn:active { transform: scale(0.97); }
+
+/* ============================================================
+   SETTINGS PANEL – SLIDE-IN DRAWER
+   ============================================================ */
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 9998;
+  pointer-events: none;
+  transition: background 0.3s ease;
+}
+.settings-backdrop--visible {
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: all;
+}
+
+.settings-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 360px;
+  background: var(--surface);
+  border-left: 1px solid var(--border-color);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.25);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.settings-panel--open {
+  transform: translateX(0);
+}
+
+/* Panel Header */
+.settings-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--surface-bright);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+.settings-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.settings-panel-icon { font-size: 1.2rem; }
+.settings-panel-title h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.settings-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+  line-height: 1;
+}
+.settings-close-btn:hover { color: #e74a3b; background: rgba(231, 74, 59, 0.1); }
+
+/* Panel Body */
+.settings-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Sections ── */
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.settings-section-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* ── Settings Row ── */
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--surface-bright);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  gap: 12px;
+}
+.settings-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.settings-row-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+.settings-row-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Select in settings panel */
+.settings-select-box {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 5px 10px;
+}
+.settings-select-box select {
+  background: none;
+  border: none;
+  color: var(--text-main);
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+/* ── Network Mode Cards ── */
+.settings-network-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.network-mode-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface-bright);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.network-mode-card input[type="radio"] { display: none; }
+.network-mode-card:hover {
+  border-color: var(--primary);
+  background: var(--surface);
+}
+.network-mode-card--active {
+  border-color: var(--primary) !important;
+  background: var(--surface) !important;
+  box-shadow: 0 0 0 3px rgba(1, 126, 132, 0.15);
+}
+.network-mode-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+.network-mode-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.network-mode-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.network-mode-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+.network-mode-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--primary);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 99px;
+  flex-shrink: 0;
+}
+
+/* ── IP Display ── */
+.settings-ip-section {
+  padding: 12px 14px;
+  background: var(--surface-bright);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: popoverFadeIn 0.2s ease-out;
+}
+.settings-ip-section--locked {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.settings-ip-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.settings-ip-loading {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.settings-ip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.settings-ip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.settings-ip-code {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.78rem;
+  color: var(--primary);
+  font-weight: 600;
+  word-break: break-all;
+}
+.settings-copy-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 3px 7px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+.settings-copy-btn:hover { background: var(--border-color); color: var(--text-main); }
+.settings-copy-btn--done { background: #21b799; border-color: #21b799; color: white; }
+
+/* Light mode fixes for settings panel */
+body.light-theme .settings-panel-title h3,
+body.light-theme .settings-row-title,
+body.light-theme .network-mode-title { color: #111827 !important; }
+body.light-theme .settings-ip-code { color: var(--primary) !important; }
+
+/* ============================================================
+   ACCESS DENIED SCREEN
+   ============================================================ */
+.access-denied-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+.access-denied-card {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 48px 40px;
+  text-align: center;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  animation: popoverFadeIn 0.3s ease-out;
+}
+.access-denied-icon {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+  display: block;
+}
+.access-denied-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 12px 0;
+}
+.access-denied-desc {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+}
+.access-denied-hint {
+  background: var(--surface-bright);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+body.light-theme .access-denied-title { color: #111827 !important; }

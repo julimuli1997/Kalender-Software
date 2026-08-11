@@ -1,5 +1,6 @@
 import json
 import os
+import socket
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -159,6 +160,35 @@ async def update_settings(settings: dict):
     write_json("settings.json", current)
     await manager.broadcast("update")
     return current
+
+# --- NETWORK INFO ROUTE ---
+@app.get("/api/network-info")
+def get_network_info():
+    ips = []
+    try:
+        # Get all IPs for the hostname
+        hostname = socket.gethostname()
+        addr_info = socket.getaddrinfo(hostname, None)
+        for info in addr_info:
+            ip = info[4][0]
+            # Only include IPv4, skip loopback
+            if ":" not in ip and not ip.startswith("127."):
+                if ip not in ips:
+                    ips.append(ip)
+    except Exception:
+        pass
+    # Fallback: try connecting to an external address
+    if not ips:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            ips.append(s.getsockname()[0])
+            s.close()
+        except Exception:
+            pass
+    settings = read_json("settings.json")
+    network_mode = settings.get("networkMode", "localhost") if isinstance(settings, dict) else "localhost"
+    return {"ips": ips, "networkMode": network_mode}
 
 # --- REACT FRONTEND SERVIEREN ---
 app.mount("/", StaticFiles(directory="dist", html=True), name="static")
