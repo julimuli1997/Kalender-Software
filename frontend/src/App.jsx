@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
-import AdminPage from './AdminPage';
-import KalenderPage from './KalenderPage';
-import './App.css';
-import './Header.css';
+import AdminPage from './pages/AdminPage';
+import KalenderPage from './pages/KalenderPage';
+import './styles/App.css';
+import './styles/Header.css';
 
 function App() {
   return (
@@ -13,7 +13,6 @@ function App() {
           <NavLink to="/admin">
             Admin-Steuerung
           </NavLink>
-          {/* NEU: target="_blank" öffnet den Link in einem neuen Tab/Fenster */}
           <NavLink 
             to="/kalender" 
             target="_blank" 

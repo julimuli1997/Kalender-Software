@@ -1,0 +1,79 @@
+/* ============================================================
+   GLOBAL DESIGN TOKENS & THEME
+   Design variables, body reset, and light/dark theme switching.
+   Imported first in main.jsx so everything else can use these vars.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* --- Dark Mode (default) --- */
+:root {
+  --background: #111827;
+  --surface: #1f2937;
+  --surface-bright: #374151;
+  --border-color: #4b5563;
+  --text-main: #f9fafb;
+  --text-muted: #9ca3af;
+
+  --primary: #017e84;
+  --primary-hover: #01666b;
+
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Light Mode --- */
+body.light-theme {
+  --background: #f9f9f9;
+  --surface: #ffffff;
+  --surface-bright: #f1f3f5;
+  --border-color: #e5e7eb;
+  --text-main: #111827 !important;
+  --text-muted: #6b7280 !important;
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* --- Base Body --- */
+body {
+  margin: 0;
+  background-color: var(--background);
+  color: var(--text-main);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* --- Shared app shell --- */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* --- Shared fade-in animation (used by popovers, modals, panels) --- */
+@keyframes popoverFadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Shared toggle switch (used in AdminPage header & SettingsPanel) --- */
+.theme-switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+.theme-switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background-color: #cbd5e1; transition: .4s; border-radius: 22px;
+}
+.slider:before {
+  position: absolute; content: ""; height: 16px; width: 16px;
+  left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+input:checked + .slider { background-color: var(--primary); }
+input:checked + .slider:before { transform: translateX(22px); }
+body:not(.light-theme) .slider { background-color: #4b5563; }
+
+/* --- Shared theme-switch wrapper row --- */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = `${window.location.origin}/api`;
 
 function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onVisibleDaysChange }) {
   const [networkMode, setNetworkMode] = useState('localhost');
