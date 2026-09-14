@@ -5,3 +5,13 @@ Dieses Produkt ist entwickelt von Julian Oehmichen bei der BTL-Digital GmbH. Bei
 oehmichen@btl-digital.de
 
 Termine weiter einrücken
+
+# Notizen
+Anstatt Wochenansicht
+-> Tages Ansicht für jeden Mitarbeiter einzeln
+--> Azubi Tab in der Terminvergabe
+
+Nächstes Jahr -> Azubi mehr
+
+# Funktionsänderungen
+Accounts erstellen -> Netzwerk verteilung ist definitv gewünscht
