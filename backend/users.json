@@ -1,0 +1,11 @@
+[
+    {
+        "id": "admin_1",
+        "username": "admin",
+        "password_hash": "2114fc814b067b2b952ae7d17a95be9f4966086582f6ceec3778c6ffe72d7003",
+        "salt": "6f83665acb62eb5f659a0e1730738dbe",
+        "role": "admin",
+        "name": "Administrator",
+        "mitarbeiter_id": "admin_1"
+    }
+]

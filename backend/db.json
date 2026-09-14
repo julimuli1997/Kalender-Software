@@ -1,1 +1,22 @@
-[]
+[
+    {
+        "id": "1789373008227",
+        "title": "Müller bad bau",
+        "start": "2026-09-14T08:00:00+02:00",
+        "end": "2026-09-14T12:00:00+02:00",
+        "allDay": false,
+        "mitarbeiter_id": "1774608907073",
+        "auto_id": "a1",
+        "beschreibung": ""
+    },
+    {
+        "id": "1789373131694",
+        "title": "ABC",
+        "start": "2026-09-14T09:00:00+02:00",
+        "end": "2026-09-14T11:30:00+02:00",
+        "allDay": false,
+        "mitarbeiter_id": "1789373027908",
+        "auto_id": "a2",
+        "beschreibung": ""
+    }
+]

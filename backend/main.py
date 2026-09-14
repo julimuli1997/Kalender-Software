@@ -10,9 +10,17 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from core.websocket import manager
-from routers import mitarbeiter, autos, termine, settings
+from routers import mitarbeiter, autos, termine, settings, users
+from routers.users import ensure_default_admin
 
-app = FastAPI(title="BTL Kalender Software")
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    ensure_default_admin()
+    yield
+
+app = FastAPI(title="BTL Kalender Software", lifespan=lifespan)
 
 # CORS middleware configuration
 app.add_middleware(
@@ -24,6 +32,7 @@ app.add_middleware(
 )
 
 # Register API Routers
+app.include_router(users.router)
 app.include_router(mitarbeiter.router)
 app.include_router(autos.router)
 app.include_router(termine.router)
@@ -39,13 +48,17 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
-# Serve React Frontend Static Files
+# Serve React Frontend Static Files (SPA fallback routing)
 if os.path.exists("dist"):
-    app.mount("/", StaticFiles(directory="dist", html=True), name="static")
+    if os.path.exists("dist/assets"):
+        app.mount("/assets", StaticFiles(directory="dist/assets"), name="assets")
 
-    @app.exception_handler(404)
-    async def custom_404_handler(request, exc):
-        return FileResponse('dist/index.html')
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        file_path = os.path.join("dist", full_path)
+        if full_path and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse("dist/index.html")
 
 # PyInstaller / Server execution runner
 import uvicorn
