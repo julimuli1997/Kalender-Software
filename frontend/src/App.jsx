@@ -73,12 +73,7 @@ function AppContent() {
             </ProtectedRoute>
           } />
           <Route path="/kalender" element={<KalenderPage />} />
-          <Route path="/" element={
-            <div style={{ textAlign: 'center', paddingTop: '5rem' }}>
-              <h2>Willkommen bei der Kalender-Anwendung</h2>
-              <p>Bitte melden Sie sich an oder öffnen Sie die TV-Ansicht.</p>
-            </div>
-          } />
+          <Route path="/" element={<Navigate to="/admin" replace />} />
         </Routes>
       </main>
     </BrowserRouter>
