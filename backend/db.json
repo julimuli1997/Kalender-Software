@@ -1,33 +1,22 @@
 [
     {
-        "id": "1774613521288",
-        "title": "Viktor zu Rhein",
-        "start": "2026-09-02T06:00:00+02:00",
-        "end": "2026-09-02T09:00:00+02:00",
+        "id": "1788718310632",
+        "title": "Roher anschließen D50 ",
+        "start": "2026-09-14T09:00:00+02:00",
+        "end": "2026-09-14T11:30:00+02:00",
         "allDay": false,
-        "mitarbeiter_id": "1774613506220",
-        "auto_id": "a2"
-    },
-    {
-        "id": "1774637342200",
-        "title": "hjgjzgf",
-        "start": "2026-11-23T03:30:00+01:00",
-        "end": "2026-11-24T02:30:00+01:00",
-        "allDay": false,
-        "mitarbeiter_id": "m2",
-        "auto_id": "a1"
-<<<<<<< HEAD
-    },
-    {
-        "id": "1774951234477",
-        "title": "Ich bin ein Test",
-        "start": "2026-03-31T07:00:00+02:00",
-        "end": "2026-03-31T10:00:00+02:00",
-        "allDay": false,
-        "mitarbeiter_id": "1774608907073",
-        "auto_id": "a2",
+        "mitarbeiter_id": "1788718236540",
+        "auto_id": "1788718260454",
         "beschreibung": ""
-=======
->>>>>>> 5982d797c7e5b24163517bec22cdd5fc8a800438
+    },
+    {
+        "id": "1788718336197",
+        "title": "Rohere Anschließen D50",
+        "start": "2026-09-07T09:00:00+02:00",
+        "end": "2026-09-07T11:00:00+02:00",
+        "allDay": false,
+        "mitarbeiter_id": "1788718236540",
+        "auto_id": "1788718260454",
+        "beschreibung": "Anschrift: \nTraumgasse 60\nStuttgart\n\nBitte Baumaterial mitnehmen\nSpezialwerkzeug, da Altbau"
     }
 ]
