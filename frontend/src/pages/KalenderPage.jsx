@@ -3,7 +3,7 @@ import FullCalendar from '@fullcalendar/react';
 import timegridPlugin from '@fullcalendar/timegrid';
 import deLocale from '@fullcalendar/core/locales/de';
 import TvHeader from '../components/TvHeader';
-import { assignColors } from '../utils/colors';
+import { assignColors, odooColors } from '../utils/colors';
 import { fetchTermine, fetchMitarbeiter, fetchAutos, fetchSettings } from '../utils/api';
 import '../styles/Calendar.css';
 
@@ -81,7 +81,7 @@ function KalenderPage() {
         ) : (
           mitarbeiter.map((m, index) => {
             const mEvents = events.filter(e => strIdMatch(e.mitarbeiter_id, m.id));
-            const accentColor = mEvents[0]?.backgroundColor || `hsl(${(index * 137) % 360}, 70%, 50%)`;
+            const accentColor = mEvents[0]?.backgroundColor || odooColors[index % odooColors.length];
 
             return (
               <div
