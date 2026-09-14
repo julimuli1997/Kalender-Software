@@ -8,28 +8,47 @@
 
 /* --- Dark Mode (default) --- */
 :root {
-  --background: #111827;
-  --surface: #1f2937;
-  --surface-bright: #374151;
-  --border-color: #4b5563;
-  --text-main: #f9fafb;
-  --text-muted: #9ca3af;
+  --background: #0f172a;
+  --surface: #1e293b;
+  --surface-bright: #334155;
+  --border-color: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
 
-  --primary: #017e84;
-  --primary-hover: #01666b;
+  /* Aliases for legacy component styles */
+  --on-surface: #f8fafc;
+  --text-color: #f8fafc;
+  --text-color-muted: #94a3b8;
+  --card-bg: #1e293b;
+  --input-bg: #0f172a;
+  --error-bg: #450a0a;
+  --error-text: #fca5a5;
 
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --primary: #0d9488;
+  --primary-hover: #0f766e;
+
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* --- Light Mode --- */
 body.light-theme {
-  --background: #f9f9f9;
+  --background: #f8fafc;
   --surface: #ffffff;
-  --surface-bright: #f1f3f5;
-  --border-color: #e5e7eb;
-  --text-main: #111827 !important;
-  --text-muted: #6b7280 !important;
-  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --surface-bright: #f1f5f9;
+  --border-color: #e2e8f0;
+  --text-main: #0f172a !important;
+  --text-muted: #64748b !important;
+
+  /* Aliases for legacy component styles */
+  --on-surface: #0f172a !important;
+  --text-color: #0f172a !important;
+  --text-color-muted: #64748b !important;
+  --card-bg: #ffffff;
+  --input-bg: #ffffff;
+  --error-bg: #fef2f2;
+  --error-text: #991b1b;
+
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
 /* --- Base Body --- */

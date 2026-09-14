@@ -92,22 +92,23 @@ function KalenderPage() {
                   minWidth: '280px',
                   display: 'flex',
                   flexDirection: 'column',
-                  backgroundColor: 'var(--card-bg, #ffffff)',
+                  backgroundColor: 'var(--surface)',
                   borderRadius: '12px',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                  boxShadow: 'var(--shadow)',
+                  border: '1px solid var(--border-color)',
                   overflow: 'hidden',
                   borderTop: `6px solid ${accentColor}`
                 }}
               >
                 <div style={{
                   padding: '0.8rem 1rem',
-                  backgroundColor: 'rgba(0,0,0,0.03)',
-                  borderBottom: '1px solid rgba(0,0,0,0.08)',
+                  backgroundColor: 'var(--surface-bright)',
+                  borderBottom: '1px solid var(--border-color)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between'
                 }}>
-                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-color)' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)' }}>
                     👤 {m.name}
                   </h3>
                   <span style={{

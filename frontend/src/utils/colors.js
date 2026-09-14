@@ -1,12 +1,12 @@
 export const odooColors = [
-  '#017e84',
-  '#b05c38',
-  '#875a7b',
-  '#21b799',
-  '#3b7ebf',
-  '#e4a900',
-  '#d83232',
-  '#8f8f8f'
+  '#0d9488', // Teal
+  '#4f46e5', // Indigo
+  '#7c3aed', // Violet
+  '#d97706', // Amber
+  '#e11d48', // Rose
+  '#0284c7', // Sky Blue
+  '#059669', // Emerald
+  '#c026d3'  // Fuchsia
 ];
 
 export const assignColors = (rawEvents, mitarbeiterList) => {

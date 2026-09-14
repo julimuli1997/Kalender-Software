@@ -1,38 +1,4 @@
-/* --- 1. ODOO COLOR VARIABLES --- */
-:root {
-  /* Odoo Dark Mode */
-  --background: #111827;
-  --surface: #1f2937;
-  --surface-bright: #374151;
-  --border-color: #4b5563;
-  --text-main: #f9fafb;
-  --text-muted: #9ca3af;
-  
-  /* Primary Odoo Blue/Teal */
-  --primary: #017e84; 
-  --primary-hover: #01666b;
-  
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-}
-
-body.light-theme {
-  /* Odoo Light Mode */
-  --background: #f9f9f9;
-  --surface: #ffffff;
-  --surface-bright: #f1f3f5;
-  --border-color: #e5e7eb;
-  --text-main: #111827 !important;
-  --text-muted: #6b7280 !important;
-  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-}
-
-body {
-  background-color: var(--background);
-  color: var(--text-main);
-  transition: background-color 0.2s ease, color 0.2s ease;
-  font-family: 'Inter', system-ui, sans-serif;
-  margin: 0;
-}
+/* --- 1. CALENDAR LAYOUT & THEME STYLES --- */
 
 .app-container {
   display: flex;

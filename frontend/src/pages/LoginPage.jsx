@@ -31,22 +31,24 @@ function LoginPage() {
       margin: '4rem auto',
       padding: '2rem',
       borderRadius: '12px',
-      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
-      backgroundColor: 'var(--card-bg, #ffffff)',
-      color: 'var(--text-color, #1a1a1a)'
+      boxShadow: 'var(--shadow)',
+      backgroundColor: 'var(--surface)',
+      color: 'var(--text-main)',
+      border: '1px solid var(--border-color)'
     }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', fontWeight: 600 }}>
+      <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', fontWeight: 600, color: 'var(--text-main)' }}>
         🔐 Kalender Login
       </h2>
 
       {error && (
         <div style={{
-          backgroundColor: '#fee2e2',
-          color: '#991b1b',
+          backgroundColor: 'var(--error-bg)',
+          color: 'var(--error-text)',
           padding: '0.75rem 1rem',
           borderRadius: '8px',
           marginBottom: '1rem',
-          fontSize: '0.9rem'
+          fontSize: '0.9rem',
+          border: '1px solid var(--border-color)'
         }}>
           {error}
         </div>
@@ -54,7 +56,7 @@ function LoginPage() {
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '1.2rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 500 }}>
+          <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 500, color: 'var(--text-main)' }}>
             Benutzername:
           </label>
           <input
@@ -67,7 +69,9 @@ function LoginPage() {
               width: '100%',
               padding: '0.75rem',
               borderRadius: '6px',
-              border: '1px solid #ccc',
+              border: '1px solid var(--border-color)',
+              backgroundColor: 'var(--input-bg)',
+              color: 'var(--text-main)',
               fontSize: '1rem',
               boxSizing: 'border-box'
             }}
@@ -75,7 +79,7 @@ function LoginPage() {
         </div>
 
         <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 500 }}>
+          <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 500, color: 'var(--text-main)' }}>
             Passwort:
           </label>
           <input
@@ -88,7 +92,9 @@ function LoginPage() {
               width: '100%',
               padding: '0.75rem',
               borderRadius: '6px',
-              border: '1px solid #ccc',
+              border: '1px solid var(--border-color)',
+              backgroundColor: 'var(--input-bg)',
+              color: 'var(--text-main)',
               fontSize: '1rem',
               boxSizing: 'border-box'
             }}
@@ -102,13 +108,14 @@ function LoginPage() {
             width: '100%',
             padding: '0.8rem',
             borderRadius: '6px',
-            backgroundColor: '#2563eb',
+            backgroundColor: 'var(--primary)',
             color: '#fff',
             border: 'none',
             fontSize: '1rem',
             fontWeight: 600,
             cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.7 : 1
+            opacity: loading ? 0.7 : 1,
+            transition: 'background-color 0.2s ease'
           }}
         >
           {loading ? 'Anmelden...' : 'Anmelden'}
