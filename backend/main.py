@@ -13,11 +13,14 @@ from core.websocket import manager
 from routers import mitarbeiter, autos, termine, settings, users
 from routers.users import ensure_default_admin
 
-app = FastAPI(title="BTL Kalender Software")
+from contextlib import asynccontextmanager
 
-@app.on_event("startup")
-def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     ensure_default_admin()
+    yield
+
+app = FastAPI(title="BTL Kalender Software", lifespan=lifespan)
 
 # CORS middleware configuration
 app.add_middleware(
