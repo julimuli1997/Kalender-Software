@@ -170,12 +170,31 @@
   overflow: hidden;
 }
 
-.fc {
-  background: var(--surface) !important;
-  border: none !important;
+.fc, 
+.fc-view-harness,
+.fc-scrollgrid,
+.fc-scrollgrid-section,
+.fc-scrollgrid-section > td,
+.fc-scrollgrid-section > th,
+.fc-theme-standard td, 
+.fc-theme-standard th,
+.fc-theme-standard .fc-scrollgrid,
+.fc-timegrid,
+.fc-timegrid-col,
+.fc-timegrid-col-frame,
+.fc-timegrid-slot,
+.fc-timegrid-slot-lane,
+.fc-timegrid-slots,
+.fc-timegrid-body,
+.fc-timegrid-axis {
+  background-color: var(--surface) !important;
+  border-color: var(--border-color) !important;
 }
 
-.fc td, .fc th { border-color: var(--border-color) !important; }
+.fc td, .fc th {
+  background-color: var(--surface) !important;
+  border-color: var(--border-color) !important;
+}
 
 .fc .fc-button-primary {
   background-color: var(--surface-bright) !important;
@@ -295,7 +314,11 @@ body:not(.light-theme) .slider { background-color: #4b5563; }
   background-color: var(--surface-bright) !important;
 }
 .tv-calendar-content .fc td, 
-.tv-calendar-content .fc th {
+.tv-calendar-content .fc th,
+.tv-employee-column .fc td,
+.tv-employee-column .fc th,
+.tv-employee-column .fc {
+  background-color: var(--surface) !important;
   border-color: var(--border-color) !important;
 }
 
