@@ -7,20 +7,23 @@
   overflow: hidden;
 }
 
-/* --- 2. GLOBAL TEXT FIX FÜR LIGHTMODE --- */
-body.light-theme .fc, 
-body.light-theme .fc-toolbar-title, 
-body.light-theme .fc-col-header-cell-cushion, 
-body.light-theme .fc-timegrid-slot-label-cushion, 
-body.light-theme .sidebar-header h3, 
-body.light-theme .header-logo, 
-body.light-theme .sidebar-item span,
-body.light-theme .modal-title,
-body.light-theme .form-group label,
-body.light-theme .detail-row,
-body.light-theme .popover-title,
-body.light-theme .popover-detail-row {
-  color: #111827 !important;
+/* --- 2. GLOBAL TEXT COLOR FIX FOR ALL THEMES --- */
+.fc, 
+.fc-toolbar-title, 
+.fc-col-header-cell-cushion, 
+.fc-timegrid-slot-label-cushion, 
+.fc-timegrid-axis-cushion,
+.fc-list-day-text,
+.fc-list-day-side-text,
+.sidebar-header h3, 
+.header-logo, 
+.sidebar-item span,
+.modal-title,
+.form-group label,
+.detail-row,
+.popover-title,
+.popover-detail-row {
+  color: var(--text-main) !important;
 }
 
 /* --- 3. HEADER & CONTROLS --- */
