@@ -32,19 +32,21 @@ function Navigation() {
         </NavLink>
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-main)' }}>
               👤 {user.name} ({user.role === 'admin' ? 'Admin' : 'Mitarbeiter'})
             </span>
             <button
               onClick={logout}
               style={{
-                padding: '0.4rem 0.8rem',
-                borderRadius: '4rem',
-                backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                color: '#ef4444',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
+                padding: '0.4rem 0.88rem',
+                borderRadius: '6px',
+                backgroundColor: 'var(--error-bg)',
+                color: 'var(--error-text)',
+                border: '1px solid var(--border-color)',
                 cursor: 'pointer',
-                fontSize: '0.85rem'
+                fontSize: '0.85rem',
+                fontWeight: 500,
+                transition: 'opacity 0.2s'
               }}
             >
               Abmelden

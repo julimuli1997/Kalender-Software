@@ -33,32 +33,35 @@ function CreateUserModal({ isOpen, onClose, onSave }) {
     <div style={{
       position: 'fixed',
       top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      backdropFilter: 'blur(3px)',
       display: 'flex',
       alignItems: 'center',
-      justifyCenter: 'center',
+      justifyContent: 'center',
       zIndex: 1000
     }}>
       <div style={{
-        backgroundColor: 'var(--card-bg, #fff)',
-        color: 'var(--text-color, #1a1a1a)',
+        backgroundColor: 'var(--surface)',
+        color: 'var(--text-main)',
         padding: '2rem',
         borderRadius: '12px',
         width: '100%',
         maxWidth: '420px',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+        boxShadow: 'var(--shadow)',
+        border: '1px solid var(--border-color)',
         margin: 'auto'
       }}>
-        <h3 style={{ marginTop: 0, marginBottom: '1.2rem' }}>👤 Neuen Benutzer-Account anlegen</h3>
+        <h3 style={{ marginTop: 0, marginBottom: '1.2rem', color: 'var(--text-main)' }}>👤 Neuen Benutzer-Account anlegen</h3>
 
         {error && (
           <div style={{
-            backgroundColor: '#fee2e2',
-            color: '#991b1b',
+            backgroundColor: 'var(--error-bg)',
+            color: 'var(--error-text)',
             padding: '0.6rem 0.8rem',
             borderRadius: '6px',
             marginBottom: '1rem',
-            fontSize: '0.85rem'
+            fontSize: '0.85rem',
+            border: '1px solid var(--border-color)'
           }}>
             {error}
           </div>
@@ -66,7 +69,7 @@ function CreateUserModal({ isOpen, onClose, onSave }) {
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.3rem', fontWeight: 500 }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.3rem', fontWeight: 500, color: 'var(--text-main)' }}>
               Name / Mitarbeiter-Bezeichnung:
             </label>
             <input
@@ -77,13 +80,15 @@ function CreateUserModal({ isOpen, onClose, onSave }) {
               placeholder="z.B. Max Mustermann"
               style={{
                 width: '100%', padding: '0.6rem', borderRadius: '6px',
-                border: '1px solid #ccc', boxSizing: 'border-box'
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--input-bg)', color: 'var(--text-main)',
+                boxSizing: 'border-box'
               }}
             />
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.3rem', fontWeight: 500 }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.3rem', fontWeight: 500, color: 'var(--text-main)' }}>
               Benutzername (für Login):
             </label>
             <input
@@ -94,13 +99,15 @@ function CreateUserModal({ isOpen, onClose, onSave }) {
               placeholder="z.B. mmustermann"
               style={{
                 width: '100%', padding: '0.6rem', borderRadius: '6px',
-                border: '1px solid #ccc', boxSizing: 'border-box'
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--input-bg)', color: 'var(--text-main)',
+                boxSizing: 'border-box'
               }}
             />
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.3rem', fontWeight: 500 }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.3rem', fontWeight: 500, color: 'var(--text-main)' }}>
               Passwort:
             </label>
             <input
@@ -111,13 +118,15 @@ function CreateUserModal({ isOpen, onClose, onSave }) {
               placeholder="Passwort eingeben"
               style={{
                 width: '100%', padding: '0.6rem', borderRadius: '6px',
-                border: '1px solid #ccc', boxSizing: 'border-box'
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--input-bg)', color: 'var(--text-main)',
+                boxSizing: 'border-box'
               }}
             />
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.3rem', fontWeight: 500 }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.3rem', fontWeight: 500, color: 'var(--text-main)' }}>
               Rolle / Berechtigung:
             </label>
             <select
@@ -125,7 +134,9 @@ function CreateUserModal({ isOpen, onClose, onSave }) {
               onChange={(e) => setRole(e.target.value)}
               style={{
                 width: '100%', padding: '0.6rem', borderRadius: '6px',
-                border: '1px solid #ccc', boxSizing: 'border-box'
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--input-bg)', color: 'var(--text-main)',
+                boxSizing: 'border-box'
               }}
             >
               <option value="mitarbeiter">Mitarbeiter (Kann nur eigene Termine bearbeiten)</option>
@@ -139,8 +150,8 @@ function CreateUserModal({ isOpen, onClose, onSave }) {
               onClick={onClose}
               style={{
                 padding: '0.5rem 1rem', borderRadius: '6px',
-                border: '1px solid #ccc', backgroundColor: 'transparent',
-                cursor: 'pointer'
+                border: '1px solid var(--border-color)', backgroundColor: 'transparent',
+                color: 'var(--text-main)', cursor: 'pointer'
               }}
             >
               Abbrechen
@@ -150,7 +161,7 @@ function CreateUserModal({ isOpen, onClose, onSave }) {
               disabled={loading}
               style={{
                 padding: '0.5rem 1rem', borderRadius: '6px',
-                border: 'none', backgroundColor: '#2563eb', color: '#fff',
+                border: 'none', backgroundColor: 'var(--primary)', color: '#fff',
                 fontWeight: 600, cursor: loading ? 'wait' : 'pointer'
               }}
             >
