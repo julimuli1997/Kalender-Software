@@ -10,7 +10,9 @@ import Header from '../components/Header';
 import AdminSidebar from '../components/AdminSidebar';
 import EventPopover from '../components/EventPopover';
 import CreateTerminModal from '../components/CreateTerminModal';
+import CreateUserModal from '../components/CreateUserModal';
 import AccessDenied from '../components/AccessDenied';
+import { useAuth } from '../components/AuthContext';
 
 import { assignColors } from '../utils/colors';
 import {
@@ -20,6 +22,9 @@ import {
   fetchSettings,
   updateSettings,
   fetchNetworkInfo,
+  fetchUsersApi,
+  createUserApi,
+  deleteUserApi,
   addItemApi,
   deleteItemApi,
   createTerminApi,
@@ -30,8 +35,12 @@ import {
 import '../styles/Calendar.css';
 
 function AdminPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   const [events, setEvents] = useState([]);
   const [mitarbeiter, setMitarbeiter] = useState([]);
+  const [users, setUsers] = useState([]);
   const [autos, setAutos] = useState([]);
   const [visibleDays, setVisibleDays] = useState("1");
   const [theme, setTheme] = useState('light');
@@ -39,6 +48,7 @@ function AdminPage() {
   const [accessDenied, setAccessDenied] = useState(false);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const [newTerminTimes, setNewTerminTimes] = useState({ start: '', end: '', allDay: false });
   const [formData, setFormData] = useState({ title: '', mitarbeiter_id: '', auto_id: '' });
 
@@ -83,11 +93,18 @@ function AdminPage() {
           fetchAutos(),
           fetchSettings()
         ]);
-        
+
+        if (isAdmin) {
+          const uData = await fetchUsersApi();
+          setUsers(uData);
+        } else {
+          setUsers(mData.map(m => ({ id: m.id, name: m.name, username: m.name.toLowerCase().replace(/\s+/g, ''), role: 'mitarbeiter' })));
+        }
+
         setMitarbeiter(mData);
         setEvents(assignColors(tData, mData));
         setAutos(aData);
-        
+
         if (sd?.visibleDays) setVisibleDays(sd.visibleDays);
         if (sd?.theme) {
           setTheme(sd.theme);
@@ -99,7 +116,7 @@ function AdminPage() {
       } catch (e) { console.error(e); }
     };
     fetchData();
-  }, []);
+  }, [isAdmin]);
 
   const toggleTheme = async () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -114,30 +131,38 @@ function AdminPage() {
     await updateSettings({ visibleDays: v });
   };
 
-  const handleAddItem = async (type) => {
-    const name = window.prompt(`${type === 'mitarbeiter' ? 'Mitarbeiter' : 'Fahrzeug'} Name:`);
-    if (!name) return;
+  const handleAddUserSave = async (userData) => {
+    const newUser = await createUserApi(userData);
+    setUsers(prev => [...prev, newUser]);
+    const mData = await fetchMitarbeiter();
+    setMitarbeiter(mData);
+    setEvents(prev => assignColors(prev, mData));
+  };
 
-    const { ok, item } = await addItemApi(type, name);
-    if (ok) {
-      if (type === 'mitarbeiter') {
-        const newM = [...mitarbeiter, item];
-        setMitarbeiter(newM);
-        setEvents(assignColors(events, newM)); 
-      } else {
-        setAutos([...autos, item]);
-      }
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("Benutzerkonto und zugehöriges Profil wirklich löschen?")) return;
+    if (await deleteUserApi(userId)) {
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      const mData = await fetchMitarbeiter();
+      setMitarbeiter(mData);
+      setEvents(prev => assignColors(prev, mData));
     }
   };
 
-  const handleDeleteItem = async (type, id) => {
-    if (!window.confirm("Wirklich löschen?")) return;
-    if (await deleteItemApi(type, id)) {
-      if (type === 'mitarbeiter') {
-        setMitarbeiter(mitarbeiter.filter(x => x.id !== id));
-      } else {
-        setAutos(autos.filter(x => x.id !== id));
-      }
+  const handleAddAuto = async () => {
+    const name = window.prompt('Fahrzeug Name:');
+    if (!name) return;
+
+    const { ok, item } = await addItemApi('autos', name);
+    if (ok) {
+      setAutos(prev => [...prev, item]);
+    }
+  };
+
+  const handleDeleteAuto = async (id) => {
+    if (!window.confirm("Fahrzeug wirklich löschen?")) return;
+    if (await deleteItemApi('autos', id)) {
+      setAutos(prev => prev.filter(x => x.id !== id));
     }
   };
 
@@ -145,13 +170,19 @@ function AdminPage() {
     if (!popoverInfo) return;
     const currentEvent = popoverInfo.event;
     
+    const targetMitarbeiterId = currentEvent.extendedProps.mitarbeiter_id;
+    if (!isAdmin && targetMitarbeiterId !== user?.mitarbeiter_id) {
+      window.alert("Sie können nur Beschreibungen eigener Termine ändern.");
+      return;
+    }
+
     const updatedEventData = {
       id: currentEvent.id,
       title: currentEvent.title,
       start: currentEvent.startStr,
       end: currentEvent.endStr || currentEvent.startStr,
       allDay: false,
-      mitarbeiter_id: currentEvent.extendedProps.mitarbeiter_id,
+      mitarbeiter_id: targetMitarbeiterId,
       auto_id: currentEvent.extendedProps.auto_id,
       beschreibung: editBeschreibung
     };
@@ -172,24 +203,39 @@ function AdminPage() {
 
   const handleDeleteTermin = async () => {
     if (!popoverInfo) return;
+    const targetMitarbeiterId = popoverInfo.event.extendedProps.mitarbeiter_id;
+    if (!isAdmin && targetMitarbeiterId !== user?.mitarbeiter_id) {
+      window.alert("Sie können nur eigene Termine löschen.");
+      return;
+    }
+
     if (window.confirm("Termin wirklich löschen?")) {
-      await deleteTerminApi(popoverInfo.event.id);
-      setEvents(events.filter(e => e.id !== popoverInfo.event.id));
-      setPopoverInfo(null);
+      const ok = await deleteTerminApi(popoverInfo.event.id);
+      if (ok) {
+        setEvents(prev => prev.filter(e => e.id !== popoverInfo.event.id));
+        setPopoverInfo(null);
+      }
     }
   };
 
   const handleCreateTerminSave = async () => {
+    const selectedMitarbeiterId = isAdmin ? formData.mitarbeiter_id : (user?.mitarbeiter_id || formData.mitarbeiter_id);
     const n = {
       id: Date.now().toString(),
       ...formData,
+      mitarbeiter_id: selectedMitarbeiterId,
       ...newTerminTimes,
       allDay: false,
       beschreibung: ''
     };
-    await createTerminApi(n);
-    setEvents(assignColors([...events, n], mitarbeiter)); 
-    setIsCreateModalOpen(false);
+
+    const ok = await createTerminApi(n);
+    if (ok) {
+      setEvents(assignColors([...events, n], mitarbeiter)); 
+      setIsCreateModalOpen(false);
+    } else {
+      window.alert("Fehler beim Erstellen des Termins.");
+    }
   };
 
   const renderEventContent = (info) => (
@@ -221,10 +267,13 @@ function AdminPage() {
 
       <div className="admin-layout">
         <AdminSidebar
-          mitarbeiter={mitarbeiter}
+          users={users}
           autos={autos}
-          onAddItem={handleAddItem}
-          onDeleteItem={handleDeleteItem}
+          isAdmin={isAdmin}
+          onAddUser={() => setIsCreateUserModalOpen(true)}
+          onDeleteUser={handleDeleteUser}
+          onAddAuto={handleAddAuto}
+          onDeleteAuto={handleDeleteAuto}
         />
 
         <div className="calendar-main-container">
@@ -244,7 +293,11 @@ function AdminPage() {
             select={(info) => {
               setPopoverInfo(null); 
               setNewTerminTimes({ start: info.startStr, end: info.endStr, allDay: false });
-              setFormData({ title: '', mitarbeiter_id: '', auto_id: '' });
+              setFormData({
+                title: '',
+                mitarbeiter_id: isAdmin ? '' : (user?.mitarbeiter_id || ''),
+                auto_id: ''
+              });
               setIsCreateModalOpen(true);
             }}
             eventClick={(info) => {
@@ -260,6 +313,13 @@ function AdminPage() {
               });
             }}
             eventDrop={async (info) => {
+              const ownerId = info.event.extendedProps.mitarbeiter_id;
+              if (!isAdmin && ownerId !== user?.mitarbeiter_id) {
+                info.revert();
+                window.alert("Sie können nur eigene Termine verschieben.");
+                return;
+              }
+
               const up = { 
                 id: info.event.id, 
                 title: info.event.title, 
@@ -271,7 +331,8 @@ function AdminPage() {
                 beschreibung: info.event.extendedProps.beschreibung || '' 
               };
               setEvents(prev => assignColors(prev.map(e => e.id === up.id ? up : e), mitarbeiter));
-              await updateTerminApi(up.id, up);
+              const ok = await updateTerminApi(up.id, up);
+              if (!ok) info.revert();
             }}
           />
         </div>
@@ -292,10 +353,16 @@ function AdminPage() {
         isOpen={isCreateModalOpen}
         formData={formData}
         setFormData={setFormData}
-        mitarbeiter={mitarbeiter}
+        mitarbeiter={isAdmin ? mitarbeiter : mitarbeiter.filter(m => m.id === user?.mitarbeiter_id)}
         autos={autos}
         onSave={handleCreateTerminSave}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      <CreateUserModal
+        isOpen={isCreateUserModalOpen}
+        onClose={() => setIsCreateUserModalOpen(false)}
+        onSave={handleAddUserSave}
       />
     </div>
   );
