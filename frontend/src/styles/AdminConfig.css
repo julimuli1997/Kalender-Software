@@ -1,0 +1,74 @@
+/* ============================================================
+   ADMIN CONFIG PAGE
+   Only theme tokens from index.css are used, so text/background
+   pairs follow light/dark mode automatically.
+   ============================================================ */
+
+.cfg-page { max-width: 960px; margin: 0 auto; padding: 1rem; color: var(--text-main); }
+.cfg-title { margin: 0 0 1rem; }
+
+.cfg-tabs { display: flex; gap: 6px; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
+.cfg-tab {
+  background: transparent; color: var(--text-muted); border: none;
+  padding: 0.6rem 1rem; cursor: pointer; font-weight: 600;
+  border-bottom: 3px solid transparent;
+}
+.cfg-tab:hover { color: var(--text-main); }
+.cfg-tab.active { color: var(--text-main); border-bottom-color: var(--primary); }
+
+.cfg-card {
+  background: var(--surface); color: var(--text-main);
+  border: 1px solid var(--border-color); border-radius: 8px;
+  padding: 1.25rem; box-shadow: var(--shadow);
+}
+.cfg-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.cfg-card-head h3 { margin: 0; }
+.cfg-subtitle { margin: 1.5rem 0 0.5rem; color: var(--text-main); }
+
+.cfg-table-wrap { overflow-x: auto; }
+.cfg-table { width: 100%; border-collapse: collapse; color: var(--text-main); }
+.cfg-table th, .cfg-table td { padding: 0.65rem 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+.cfg-table th { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; }
+.cfg-row-actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+
+.cfg-badge, .cfg-role {
+  display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 10px;
+  font-size: 0.72rem; font-weight: 600; background: var(--surface-bright);
+  color: var(--text-main); border: 1px solid var(--border-color);
+}
+.cfg-role { margin-left: 0; }
+.cfg-role-admin { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.cfg-form { display: flex; flex-direction: column; gap: 0.9rem; }
+.cfg-form label { display: flex; flex-direction: column; gap: 4px; font-weight: 500; color: var(--text-main); }
+.cfg-form label.cfg-check { flex-direction: row; align-items: center; gap: 8px; }
+.cfg-form input:not([type="checkbox"]), .cfg-form select { padding: 0.5rem 0.7rem; border-radius: 6px; border: 1px solid var(--border-color); }
+
+.cfg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1rem; }
+.cfg-btn {
+  padding: 0.4rem 0.85rem; border-radius: 6px; cursor: pointer; font-weight: 500;
+  background: transparent; color: var(--text-main); border: 1px solid var(--border-color);
+}
+.cfg-btn:hover:not(:disabled) { background: var(--surface-bright); }
+.cfg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.cfg-btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.cfg-btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.cfg-btn-danger { background: var(--error-bg); color: var(--error-text); }
+
+.cfg-error, .cfg-success { padding: 0.6rem 0.9rem; border-radius: 6px; margin-bottom: 0.9rem; font-size: 0.9rem; }
+.cfg-error { background: var(--error-bg); color: var(--error-text); }
+.cfg-success { background: var(--surface-bright); color: var(--text-main); border: 1px solid var(--primary); }
+.cfg-hint { color: var(--text-muted); font-size: 0.85rem; }
+
+.cfg-locked { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; color: var(--text-main); }
+.cfg-locked li { display: flex; align-items: center; gap: 10px; }
+
+.cfg-overlay {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 10000;
+  display: flex; align-items: center; justify-content: center;
+}
+.cfg-modal {
+  background: var(--surface); color: var(--text-main); border: 1px solid var(--border-color);
+  border-radius: 10px; padding: 1.5rem; width: min(440px, 92vw); box-shadow: var(--shadow);
+}
+.cfg-modal-title { margin: 0 0 1rem; font-size: 1.1rem; }
