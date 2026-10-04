@@ -1,5 +1,6 @@
 import socket
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from core.auth import get_current_user
 from core.database import read_json, write_json
 from core.websocket import manager
 
@@ -15,7 +16,7 @@ def get_settings():
     return settings
 
 @router.post("/settings")
-async def update_settings(settings: dict):
+async def update_settings(settings: dict, user: dict = Depends(get_current_user)):
     current = read_json(FILE_PATH)
     if not isinstance(current, dict):
         current = {}

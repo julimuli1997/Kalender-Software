@@ -12,7 +12,7 @@ export function setAuthToken(token) {
   }
 }
 
-function getAuthHeaders() {
+export function getAuthHeaders() {
   const token = getAuthToken();
   return token ? { 'Authorization': `Bearer ${token}` } : {};
 }

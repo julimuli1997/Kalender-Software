@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import AdminPage from './pages/AdminPage';
+import AdminConfigPage from './pages/AdminConfigPage';
 import KalenderPage from './pages/KalenderPage';
 import LoginPage from './pages/LoginPage';
 import './styles/App.css';
@@ -10,6 +11,12 @@ function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div style={{ textAlign: 'center', padding: '3rem' }}>Laden...</div>;
   if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+
+function AdminRoute({ children }) {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <Navigate to="/admin" replace />;
   return children;
 }
 
@@ -23,6 +30,9 @@ function Navigation() {
         <NavLink to="/admin">
           Admin-Steuerung
         </NavLink>
+        {user?.role === 'admin' && (
+          <NavLink to="/admin/config">Konfiguration</NavLink>
+        )}
         <NavLink 
           to="/kalender" 
           target="_blank" 
@@ -69,6 +79,13 @@ function AppContent() {
       <main className="container">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/admin/config" element={
+            <ProtectedRoute>
+              <AdminRoute>
+                <AdminConfigPage />
+              </AdminRoute>
+            </ProtectedRoute>
+          } />
           <Route path="/admin" element={
             <ProtectedRoute>
               <AdminPage />
