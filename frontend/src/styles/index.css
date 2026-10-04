@@ -12,13 +12,13 @@
   --surface: #1e293b;
   --surface-bright: #334155;
   --border-color: #334155;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
+  --text-main: #ffffff;
+  --text-muted: #cbd5e1;
 
   /* Aliases for legacy component styles */
-  --on-surface: #f8fafc;
-  --text-color: #f8fafc;
-  --text-color-muted: #94a3b8;
+  --on-surface: #ffffff;
+  --text-color: #ffffff;
+  --text-color-muted: #cbd5e1;
   --card-bg: #1e293b;
   --input-bg: #0f172a;
   --error-bg: #450a0a;
@@ -36,13 +36,13 @@ body.light-theme {
   --surface: #ffffff;
   --surface-bright: #f1f5f9;
   --border-color: #e2e8f0;
-  --text-main: #0f172a !important;
-  --text-muted: #64748b !important;
+  --text-main: #000000;
+  --text-muted: #374151;
 
   /* Aliases for legacy component styles */
-  --on-surface: #0f172a !important;
-  --text-color: #0f172a !important;
-  --text-color-muted: #64748b !important;
+  --on-surface: #000000;
+  --text-color: #000000;
+  --text-color-muted: #374151;
   --card-bg: #ffffff;
   --input-bg: #ffffff;
   --error-bg: #fef2f2;
@@ -124,3 +124,17 @@ body:not(.light-theme) .slider { background-color: #4b5563; }
   align-items: center;
   gap: 8px;
 }
+
+/* --- Unified text colors: white on dark surfaces, black on light surfaces --- */
+.fc,
+.fc a,
+.fc .fc-daygrid-day-number,
+.fc .fc-col-header-cell-cushion,
+.fc .fc-timegrid-slot-label-cushion,
+.fc .fc-list-day-text,
+.fc .fc-list-day-side-text {
+  color: var(--text-main);
+}
+
+a { color: var(--primary); }
+label, th, td, li, span { color: inherit; }
