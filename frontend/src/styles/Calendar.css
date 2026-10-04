@@ -99,11 +99,11 @@
 }
 
 .admin-sidebar {
-  width: 280px;
+  width: 300px;
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   background: var(--background);
   border-right: 1px solid var(--border-color);
   overflow-y: auto;
@@ -121,13 +121,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
   width: 100%;
 }
 
 .sidebar-header h3 {
+  flex: 1;
+  min-width: 0;
   font-size: 1rem;
   font-weight: 700;
+  line-height: 1.25;
   margin: 0;
 }
 
@@ -135,10 +141,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  gap: 10px;
+  padding: 10px 12px;
   background: var(--surface-bright);
   border-radius: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-size: 0.9rem;
   border: 1px solid transparent;
 }
@@ -147,9 +154,10 @@
   background: var(--primary);
   color: white !important;
   border: none;
-  width: 24px; 
-  height: 24px;
-  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -160,7 +168,13 @@
 }
 
 .btn-add-square:hover { background: var(--primary-hover); }
-.delete-x { color: #dc3545; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+.delete-x { color: #dc3545; cursor: pointer; font-weight: bold; font-size: 0.8rem; flex-shrink: 0; padding: 4px 6px; border-radius: 4px; }
+.delete-x:hover { background: var(--error-bg); }
+
+.sidebar-item-user { flex-direction: column; align-items: stretch; gap: 4px; }
+.sidebar-item-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; }
+.sidebar-item-sub { font-size: 0.75rem; color: var(--text-muted); padding-left: 1.4rem; }
+.sidebar-item-sub .role { text-transform: capitalize; }
 
 /* --- 5. FULLCALENDAR & BUTTONS (ODOO STYLE) --- */
 .calendar-main-container {
@@ -1130,3 +1144,12 @@ body.light-theme .settings-ip-code { color: var(--primary) !important; }
   line-height: 1.5;
 }
 body.light-theme .access-denied-title { color: var(--text-main) !important; }
+
+/* --- Settings panel: link row to sub-pages --- */
+.settings-link-row {
+  display: flex; align-items: center; justify-content: space-between; width: 100%;
+  padding: 10px 12px; border-radius: 8px; cursor: pointer; text-align: left;
+  background: var(--surface-bright); color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+.settings-link-row:hover { border-color: var(--primary); }

@@ -30,9 +30,6 @@ function Navigation() {
         <NavLink to="/admin">
           Admin-Steuerung
         </NavLink>
-        {user?.role === 'admin' && (
-          <NavLink to="/admin/config">Konfiguration</NavLink>
-        )}
         <NavLink 
           to="/kalender" 
           target="_blank" 

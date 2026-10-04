@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
 
+const ROLE_OPTIONS = [
+  { value: 'mitarbeiter', title: 'Mitarbeiter', desc: 'Kann nur eigene Termine bearbeiten' },
+  { value: 'admin', title: 'Administrator', desc: 'Vollzugriff auf alle Termine & Accounts' },
+];
+
 function CreateUserModal({ isOpen, onClose, onSave }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -46,7 +51,7 @@ function CreateUserModal({ isOpen, onClose, onSave }) {
         padding: '2rem',
         borderRadius: '12px',
         width: '100%',
-        maxWidth: '420px',
+        maxWidth: '480px',
         boxShadow: 'var(--shadow)',
         border: '1px solid var(--border-color)',
         margin: 'auto'
@@ -129,19 +134,28 @@ function CreateUserModal({ isOpen, onClose, onSave }) {
             <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.3rem', fontWeight: 500, color: 'var(--text-main)' }}>
               Rolle / Berechtigung:
             </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              style={{
-                width: '100%', padding: '0.6rem', borderRadius: '6px',
-                border: '1px solid var(--border-color)',
-                backgroundColor: 'var(--input-bg)', color: 'var(--text-main)',
-                boxSizing: 'border-box'
-              }}
-            >
-              <option value="mitarbeiter">Mitarbeiter (Kann nur eigene Termine bearbeiten)</option>
-              <option value="admin">Administrator (Vollzugriff auf alle Termine & Accounts)</option>
-            </select>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {ROLE_OPTIONS.map(opt => {
+                const active = role === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setRole(opt.value)}
+                    aria-pressed={active}
+                    style={{
+                      textAlign: 'left', padding: '0.7rem 0.9rem', borderRadius: '8px', cursor: 'pointer',
+                      border: `2px solid ${active ? 'var(--primary)' : 'var(--border-color)'}`,
+                      backgroundColor: active ? 'var(--surface-bright)' : 'var(--input-bg)',
+                      color: 'var(--text-main)', display: 'flex', flexDirection: 'column', gap: '2px'
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>{opt.title}</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.35 }}>{opt.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
