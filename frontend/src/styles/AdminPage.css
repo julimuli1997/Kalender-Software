@@ -17,7 +17,7 @@ body.light-theme .form-group label,
 body.light-theme .detail-row,
 body.light-theme .popover-title,
 body.light-theme .popover-detail-row {
-  color: #111827 !important;
+  color: var(--text-main) !important;
 }
 
 /* ── Admin Header ── */
@@ -322,9 +322,9 @@ body.light-theme .popover-detail-row {
 
 body.light-theme .popover-form-label { color: var(--text-muted) !important; }
 body.light-theme .popover-textarea {
-  color: #111827 !important;
-  background: #fdfdfd;
-  border-color: #cbd5e1;
+  color: var(--text-main) !important;
+  background: var(--input-bg);
+  border-color: var(--border-color);
 }
 
 /* ── New-Appointment Modal ── */
