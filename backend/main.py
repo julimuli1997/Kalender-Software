@@ -1,8 +1,14 @@
 import os
 import sys
 
+# All data files (users.json, db.json, dist/, ...) are resolved relative to the
+# working directory. Pin it to the app folder so it also works when started by a
+# service manager (Windows Task Scheduler / systemd), which use other directories.
+BASE_DIR = os.path.dirname(sys.executable if getattr(sys, "frozen", False) else os.path.abspath(__file__))
+os.chdir(BASE_DIR)
+
 # Ensure current directory is in sys.path for module resolution
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, BASE_DIR)
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -85,8 +91,14 @@ if __name__ == "__main__":
         sys.stdin = open(os.devnull, "r")
         
     try:
-        threading.Timer(1.5, open_browser).start()
-        uvicorn.run(app, host="0.0.0.0", port=8000)
+        # Headless/service start: python main.py --no-browser
+        if "--no-browser" not in sys.argv:
+            threading.Timer(1.5, open_browser).start()
+        uvicorn.run(
+            app,
+            host=os.environ.get("KALENDER_HOST", "0.0.0.0"),
+            port=int(os.environ.get("KALENDER_PORT", "8000")),
+        )
     except Exception as e:
         with open("crash_log.txt", "w", encoding="utf-8") as f:
             f.write(traceback.format_exc())
