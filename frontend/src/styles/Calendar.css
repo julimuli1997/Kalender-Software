@@ -375,7 +375,7 @@ body:not(.light-theme) .slider { background-color: #4b5563; }
 }
 
 /* Lightmode Text-Fix speziell für die TV-Ansicht ergänzen */
-body.light-theme .tv-clock { color: #111827 !important; }
+body.light-theme .tv-clock { color: var(--text-main) !important; }
 
 
 
@@ -519,9 +519,9 @@ body.light-theme .tv-clock { color: #111827 !important; }
 
 body.light-theme .popover-form-label { color: var(--text-muted) !important; }
 body.light-theme .popover-textarea {
-  color: #111827 !important;
-  background: #fdfdfd;
-  border-color: #cbd5e1;
+  color: var(--text-main) !important;
+  background: var(--input-bg);
+  border-color: var(--border-color);
 }
 
 @keyframes popoverFadeIn {
@@ -779,9 +779,9 @@ body.light-theme .popover-form-label {
 }
 
 body.light-theme .popover-textarea {
-  color: #111827 !important;
-  background: #fdfdfd; /* Sehr hell für Textareas */
-  border-color: #cbd5e1;
+  color: var(--text-main) !important;
+  background: var(--input-bg); /* Sehr hell für Textareas */
+  border-color: var(--border-color);
 }
 
 /* ============================================================
@@ -1077,7 +1077,7 @@ body.light-theme .popover-textarea {
 /* Light mode fixes for settings panel */
 body.light-theme .settings-panel-title h3,
 body.light-theme .settings-row-title,
-body.light-theme .network-mode-title { color: #111827 !important; }
+body.light-theme .network-mode-title { color: var(--text-main) !important; }
 body.light-theme .settings-ip-code { color: var(--primary) !important; }
 
 /* ============================================================
@@ -1129,4 +1129,4 @@ body.light-theme .settings-ip-code { color: var(--primary) !important; }
   color: var(--text-muted);
   line-height: 1.5;
 }
-body.light-theme .access-denied-title { color: #111827 !important; }
+body.light-theme .access-denied-title { color: var(--text-main) !important; }
