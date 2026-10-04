@@ -9,8 +9,12 @@ from core.auth import (
     remove_session,
     get_current_user,
     require_admin,
+    revoke_user_sessions,
     USERS_FILE
 )
+from core.login_guard import check_not_locked, register_failure, register_success
+from core.password_policy import enforce_password_policy
+TERMINE_FILE = "db.json"
 from core.websocket import manager
 
 router = APIRouter(prefix="/api", tags=["users"])
@@ -42,9 +46,12 @@ def login(credentials: UserLogin):
     if not isinstance(users, list):
         users = []
     
+    check_not_locked(credentials.username)
     user = next((u for u in users if u.get("username", "").lower() == credentials.username.lower()), None)
     if not user or not verify_password(credentials.password, user.get("password_hash", ""), user.get("salt", "")):
+        register_failure(credentials.username)
         raise HTTPException(status_code=400, detail="Ungültiger Benutzername oder Passwort")
+    register_success(credentials.username)
     
     token = create_session(user)
     user_res = UserResponse(
@@ -58,7 +65,7 @@ def login(credentials: UserLogin):
 
 @router.post("/auth/logout")
 def logout(user: dict = Depends(get_current_user)):
-    # Handled by frontend clearing header/token or backend session cleanup
+    remove_session(user.get("token"))
     return {"status": "ok"}
 
 @router.get("/auth/me", response_model=UserResponse)
@@ -96,6 +103,9 @@ async def create_user(u: UserCreate, admin: dict = Depends(require_admin)):
     if any(x.get("username", "").lower() == u.username.lower() for x in users):
         raise HTTPException(status_code=400, detail="Benutzername existiert bereits")
 
+    if u.role not in ("admin", "mitarbeiter"):
+        raise HTTPException(status_code=400, detail="Ungültige Rolle")
+    enforce_password_policy(u.password)
     hashed, salt = hash_password(u.password)
     user_id = str(int(time.time() * 1000))
     mitarbeiter_id = user_id
@@ -141,13 +151,22 @@ async def delete_user(user_id: str, admin: dict = Depends(require_admin)):
     if user_to_del.get("username") == "admin":
         raise HTTPException(status_code=400, detail="Haupt-Admin kann nicht gelöscht werden")
 
+    if user_id == str(admin.get("id")):
+        raise HTTPException(status_code=400, detail="Eigenes Konto kann nicht gelöscht werden")
+
     write_json(USERS_FILE, [x for x in users if str(x.get("id")) != user_id])
+    revoke_user_sessions(user_id)
 
     # Also clean up mitarbeiter list entry if matched
     m_id = user_to_del.get("mitarbeiter_id") or user_id
     mitarbeiter_list = read_json(MITARBEITER_FILE)
     if isinstance(mitarbeiter_list, list):
         write_json(MITARBEITER_FILE, [m for m in mitarbeiter_list if str(m.get("id")) != str(m_id)])
+
+    # Appointments of a deleted employee would be orphaned -> remove them too
+    termine = read_json(TERMINE_FILE)
+    if isinstance(termine, list):
+        write_json(TERMINE_FILE, [t for t in termine if str(t.get("mitarbeiter_id")) != str(m_id)])
 
     await manager.broadcast("update")
     return {"status": "ok"}

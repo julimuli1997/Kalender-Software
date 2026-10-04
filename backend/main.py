@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from core.websocket import manager
-from routers import mitarbeiter, autos, termine, settings, users
+from routers import mitarbeiter, autos, termine, settings, users, user_admin, account, admin_security
 from routers.users import ensure_default_admin
 
 from contextlib import asynccontextmanager
@@ -33,6 +33,9 @@ app.add_middleware(
 
 # Register API Routers
 app.include_router(users.router)
+app.include_router(user_admin.router)
+app.include_router(account.router)
+app.include_router(admin_security.router)
 app.include_router(mitarbeiter.router)
 app.include_router(autos.router)
 app.include_router(termine.router)

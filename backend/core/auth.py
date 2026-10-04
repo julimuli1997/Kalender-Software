@@ -1,9 +1,11 @@
 import hashlib
 import os
 import secrets
+import time
 from fastapi import HTTPException, Header, Depends
 from typing import Optional
 from core.database import read_json, write_json
+from core.security_settings import get_security_settings
 
 USERS_FILE = "users.json"
 SESSIONS = {}  # token -> user_dict
@@ -30,10 +32,16 @@ def create_session(user_dict: dict) -> str:
         "username": user_dict.get("username"),
         "role": user_dict.get("role", "mitarbeiter"),
         "name": user_dict.get("name"),
-        "mitarbeiter_id": user_dict.get("mitarbeiter_id") or user_dict.get("id")
+        "mitarbeiter_id": user_dict.get("mitarbeiter_id") or user_dict.get("id"),
+        "last_seen": time.time(),
     }
     SESSIONS[token] = user_info
     return token
+
+def revoke_user_sessions(user_id: str, except_token: Optional[str] = None):
+    """Log a user out everywhere (after password reset, role change, delete)."""
+    for t in [t for t, u in SESSIONS.items() if str(u.get("id")) == str(user_id) and t != except_token]:
+        SESSIONS.pop(t, None)
 
 def remove_session(token: str):
     SESSIONS.pop(token, None)
@@ -48,6 +56,12 @@ def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
     user = SESSIONS.get(token)
     if not user:
         raise HTTPException(status_code=401, detail="Ungültiger oder abgelaufener Token")
+    timeout = get_security_settings()["session_timeout_minutes"] * 60
+    if time.time() - user["last_seen"] > timeout:
+        SESSIONS.pop(token, None)
+        raise HTTPException(status_code=401, detail="Sitzung abgelaufen")
+    user["last_seen"] = time.time()  # sliding expiry
+    user["token"] = token
     return user
 
 def get_optional_user(authorization: Optional[str] = Header(None)) -> Optional[dict]:
