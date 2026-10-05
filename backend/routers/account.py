@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from core.auth import get_session_user, hash_password, verify_password, revoke_user_sessions, clear_must_change
+from core.auth import get_session_user, is_admin, hash_password, verify_password, revoke_user_sessions, clear_must_change
 from core.database import db_lock
 from core.password_policy import enforce_password_policy
 from core.security_settings import get_security_settings
@@ -18,7 +18,7 @@ class PasswordChange(BaseModel):
 
 @router.post("/change-password")
 def change_password(body: PasswordChange, user: dict = Depends(get_session_user)):
-    if user.get("role") != "admin" and not get_security_settings()["allow_self_password_change"]:
+    if not is_admin(user) and not get_security_settings()["allow_self_password_change"]:
         raise HTTPException(status_code=403, detail="Passwortänderung wurde vom Administrator deaktiviert")
 
     with db_lock:

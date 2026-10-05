@@ -17,8 +17,8 @@ from fastapi.responses import FileResponse
 
 from core.auth import calendar_view_is_public, user_for_token
 from core.websocket import manager
-from routers import mitarbeiter, autos, termine, settings, users, user_admin, account, admin_security
-from routers.users import ensure_default_admin
+from core.user_store import ensure_default_admin
+from routers import login, users, account, admin_security, mitarbeiter, autos, termine, settings
 
 from contextlib import asynccontextmanager
 
@@ -41,8 +41,8 @@ if cors_origins:
     )
 
 # Register API Routers
+app.include_router(login.router)
 app.include_router(users.router)
-app.include_router(user_admin.router)
 app.include_router(account.router)
 app.include_router(admin_security.router)
 app.include_router(mitarbeiter.router)
@@ -111,6 +111,6 @@ if __name__ == "__main__":
             host=os.environ.get("KALENDER_HOST", "0.0.0.0"),
             port=int(os.environ.get("KALENDER_PORT", "8000")),
         )
-    except Exception as e:
+    except Exception:
         with open("crash_log.txt", "w", encoding="utf-8") as f:
             f.write(traceback.format_exc())
