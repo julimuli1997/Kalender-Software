@@ -17,6 +17,7 @@ SCHEMA = {
     "max_failed_attempts":      (5,   0,  50),     # 0 = lockout disabled
     "lockout_minutes":          (15,  1,  1440),
     "allow_self_password_change": (True, None, None),
+    "public_calendar_view":     (True, None, None),  # False = TV view/read API need a login
 }
 
 DEFAULTS = {k: v[0] for k, v in SCHEMA.items()}
