@@ -1,24 +1,20 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loginApi, fetchMeApi, setAuthToken } from '../utils/api';
-
-const AuthContext = createContext(null);
+import { useState, useEffect } from 'react';
+import { loginApi, fetchMeApi, setAuthToken, AUTH_EXPIRED_EVENT } from '../utils/api';
+import { AuthContext } from '../hooks/useAuth';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function checkAuth() {
-      try {
-        const u = await fetchMeApi();
-        setUser(u);
-      } catch (e) {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-    checkAuth();
+    fetchMeApi().then(setUser).finally(() => setLoading(false));
+  }, []);
+
+  // The server rejected our token (session expired): drop the user so the app shows the login.
+  useEffect(() => {
+    const onExpired = () => setUser(null);
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
   }, []);
 
   const login = async (username, password) => {
@@ -38,8 +34,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }

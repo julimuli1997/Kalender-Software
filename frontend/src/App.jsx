@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './components/AuthContext';
+import { AuthProvider } from './components/AuthContext';
+import { useAuth } from './hooks/useAuth';
 import AdminPage from './pages/AdminPage';
 import AdminConfigPage from './pages/AdminConfigPage';
 import KalenderPage from './pages/KalenderPage';

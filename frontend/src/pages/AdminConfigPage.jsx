@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../components/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import UsersPanel from '../components/admin-config/UsersPanel';
 import SecuritySettingsPanel from '../components/admin-config/SecuritySettingsPanel';
 import MyPasswordPanel from '../components/admin-config/MyPasswordPanel';
