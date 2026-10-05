@@ -4,6 +4,7 @@ import AdminPage from './pages/AdminPage';
 import AdminConfigPage from './pages/AdminConfigPage';
 import KalenderPage from './pages/KalenderPage';
 import LoginPage from './pages/LoginPage';
+import ForcePasswordChange from './components/ForcePasswordChange';
 import './styles/App.css';
 import './styles/Header.css';
 
@@ -11,6 +12,7 @@ function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div style={{ textAlign: 'center', padding: '3rem' }}>Laden...</div>;
   if (!user) return <Navigate to="/login" replace />;
+  if (user.must_change_password) return <ForcePasswordChange />;
   return children;
 }
 
@@ -30,9 +32,6 @@ function Navigation() {
         <NavLink to="/admin">
           Admin-Steuerung
         </NavLink>
-        {user?.role === 'admin' && (
-          <NavLink to="/admin/config">Konfiguration</NavLink>
-        )}
         <NavLink 
           to="/kalender" 
           target="_blank" 

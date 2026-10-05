@@ -1,0 +1,27 @@
+# Dependencies / virtualenvs
+node_modules/
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Build output (frontend build is copied to backend/dist, see deploy/README.md)
+dist/
+dist-exe/
+backend/build/
+
+# Runtime data - contains user hashes and appointments, never commit
+backend/users.json
+backend/db.json
+backend/mitarbeiter.json
+backend/autos.json
+backend/settings.json
+backend/security.json
+backend/*.json.tmp
+backend/crash_log.txt
+
+# OS / editor
+.DS_Store
+backend/*.corrupt-*

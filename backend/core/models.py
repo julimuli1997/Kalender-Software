@@ -21,6 +21,7 @@ class UserResponse(BaseModel):
     role: str
     name: str
     mitarbeiter_id: Optional[str] = None
+    must_change_password: bool = False
 
 class TokenResponse(BaseModel):
     token: str

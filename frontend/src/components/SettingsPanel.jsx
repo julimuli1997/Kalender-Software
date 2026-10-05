@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { API_URL, getAuthHeaders } from '../utils/api';
 
-const API_URL = `${window.location.origin}/api`;
-
-function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onVisibleDaysChange }) {
+function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onVisibleDaysChange, isAdmin }) {
+  const navigate = useNavigate();
   const [networkMode, setNetworkMode] = useState('localhost');
   const [serverIps, setServerIps] = useState([]);
   const [copied, setCopied] = useState(null);
@@ -12,7 +13,7 @@ function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onV
   useEffect(() => {
     if (!isOpen) return;
     setLoadingNetwork(true);
-    fetch(`${API_URL}/network-info`)
+    fetch(`${API_URL}/network-info`, { headers: getAuthHeaders() })
       .then(r => r.json())
       .then(data => {
         setServerIps(data.ips || []);
@@ -27,7 +28,7 @@ function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onV
     setNetworkMode(mode);
     await fetch(`${API_URL}/settings`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ networkMode: mode }),
     });
   };
@@ -63,6 +64,24 @@ function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onV
         </div>
 
         <div className="settings-panel-body">
+
+          {/* ── ADMINISTRATION (admins only) ── */}
+          {isAdmin && (
+            <div className="settings-section">
+              <div className="settings-section-label">Verwaltung</div>
+              <button
+                className="settings-link-row"
+                id="settings-open-config"
+                onClick={() => { onClose(); navigate('/admin/config'); }}
+              >
+                <span className="settings-row-info">
+                  <span className="settings-row-title">Konfiguration</span>
+                  <span className="settings-row-desc">Benutzer, Rollen, Passwörter & Sicherheit</span>
+                </span>
+                <span aria-hidden="true">›</span>
+              </button>
+            </div>
+          )}
 
           {/* ── APPEARANCE ── */}
           <div className="settings-section">

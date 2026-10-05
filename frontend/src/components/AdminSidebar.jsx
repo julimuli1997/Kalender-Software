@@ -18,15 +18,15 @@ function AdminSidebar({ users, autos, isAdmin, onAddUser, onDeleteUser, onAddAut
         </div>
         <div className="sidebar-list">
           {users.map(u => (
-            <div key={u.id} className="sidebar-item" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
-              <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div key={u.id} className="sidebar-item sidebar-item-user">
+              <div className="sidebar-item-row">
                 <span style={{ fontWeight: 600 }}>👤 {u.name}</span>
                 {isAdmin && u.username !== 'admin' && (
                   <span className="delete-x" onClick={() => onDeleteUser(u.id)}>✕</span>
                 )}
               </div>
-              <div style={{ fontSize: '0.75rem', opacity: 0.7, paddingLeft: '1.2rem' }}>
-                @{u.username} • <span style={{ textTransform: 'capitalize' }}>{u.role}</span>
+              <div className="sidebar-item-sub">
+                @{u.username} • <span className="role">{u.role}</span>
               </div>
             </div>
           ))}

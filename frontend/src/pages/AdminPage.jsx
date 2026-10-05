@@ -261,6 +261,7 @@ function AdminPage() {
         onThemeChange={toggleTheme}
         visibleDays={visibleDays}
         onVisibleDaysChange={handleSettingsChange}
+        isAdmin={isAdmin}
       />
 
       <Header onOpenSettings={() => setIsSettingsOpen(true)} />
