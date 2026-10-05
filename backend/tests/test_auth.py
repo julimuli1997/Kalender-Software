@@ -52,3 +52,28 @@ def test_non_admin_cannot_use_admin_endpoints(client, make_user):
     assert client.get("/api/users", headers=h).status_code == 403
     assert client.post("/api/autos", headers=h, json={"id": "1", "name": "Bus"}).status_code == 403
     assert client.get("/api/admin/security", headers=h).status_code == 403
+
+
+def test_user_management_edit_reset_and_role_validation(client, admin, make_user):
+    h, user = make_user("max", "Max")
+    uid = user["id"]
+
+    r = client.put(f"/api/users/{uid}", headers=admin, json={"name": "Maximilian"})
+    assert r.status_code == 200 and r.json()["name"] == "Maximilian"
+    assert [m["name"] for m in client.get("/api/mitarbeiter").json()] == ["Maximilian"]
+
+    assert client.put(f"/api/users/{uid}", headers=admin, json={"role": "chef"}).status_code == 422
+
+    client.put(f"/api/users/{uid}", headers=admin, json={"role": "admin"})
+    assert client.get("/api/auth/me", headers=h).status_code == 401  # role change ends the session
+
+    assert client.post(f"/api/users/{uid}/reset-password", headers=admin, json={"new_password": "Neu12345"}).status_code == 200
+    assert login(client, "max", "Passwort1").status_code == 400
+    assert login(client, "max", "Neu12345").status_code == 200
+
+
+def test_last_admin_and_main_admin_are_protected(client, admin):
+    me = client.get("/api/auth/me", headers=admin).json()
+    assert client.put(f"/api/users/{me['id']}", headers=admin, json={"role": "mitarbeiter"}).status_code == 400
+    assert client.delete(f"/api/users/{me['id']}", headers=admin).status_code == 400
+    assert client.delete("/api/users/gibts-nicht", headers=admin).status_code == 404

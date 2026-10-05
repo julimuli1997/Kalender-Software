@@ -1,0 +1,7 @@
+"""Names of all data files. They live in the app folder (main.py pins the working directory there)."""
+USERS_FILE = "users.json"
+TERMINE_FILE = "db.json"
+MITARBEITER_FILE = "mitarbeiter.json"
+AUTOS_FILE = "autos.json"
+SETTINGS_FILE = "settings.json"
+SECURITY_FILE = "security.json"

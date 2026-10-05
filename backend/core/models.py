@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from core.roles import Role, EMPLOYEE
 
 class NameModel(BaseModel):
     id: str
@@ -8,7 +9,7 @@ class NameModel(BaseModel):
 class UserCreate(BaseModel):
     username: str
     password: str
-    role: str = "mitarbeiter"  # "admin" or "mitarbeiter"
+    role: Role = EMPLOYEE
     name: str  # Display name / Mitarbeiter Name
 
 class UserLogin(BaseModel):
@@ -36,4 +37,3 @@ class Termin(BaseModel):
     mitarbeiter_id: Optional[str] = None
     auto_id: Optional[str] = None
     beschreibung: Optional[str] = ""
-

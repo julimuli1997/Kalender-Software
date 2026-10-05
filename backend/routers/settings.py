@@ -2,13 +2,12 @@ import socket
 from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict
-from core.auth import get_current_user, require_calendar_view
-from core.database import read_json, write_json, db_lock
+from core.auth import get_current_user, is_admin, require_calendar_view
+from core.database import db_lock, read_dict, write_json
+from core.paths import SETTINGS_FILE
 from core.websocket import manager
 
 router = APIRouter(prefix="/api", tags=["settings"])
-
-FILE_PATH = "settings.json"
 
 
 class SettingsUpdate(BaseModel):
@@ -20,23 +19,18 @@ class SettingsUpdate(BaseModel):
 
 @router.get("/settings")
 def get_settings(_viewer=Depends(require_calendar_view)):
-    settings = read_json(FILE_PATH)
-    if not settings or not isinstance(settings, dict):
-        return {"visibleDays": "1", "theme": "light"}
-    return settings
+    return read_dict(SETTINGS_FILE) or {"visibleDays": "1", "theme": "light"}
 
 @router.post("/settings")
 async def update_settings(settings: SettingsUpdate, user: dict = Depends(get_current_user)):
     changes = settings.model_dump(exclude_none=True)
     # networkMode decides who may reach the admin page at all -> admins only
-    if "networkMode" in changes and user.get("role") != "admin":
+    if "networkMode" in changes and not is_admin(user):
         raise HTTPException(status_code=403, detail="Nur für Administratoren gestattet")
     with db_lock:
-        current = read_json(FILE_PATH)
-        if not isinstance(current, dict):
-            current = {}
+        current = read_dict(SETTINGS_FILE)
         current.update(changes)
-        write_json(FILE_PATH, current)
+        write_json(SETTINGS_FILE, current)
     await manager.broadcast("update")
     return current
 
@@ -63,6 +57,4 @@ def get_network_info(_user: dict = Depends(get_current_user)):
         except Exception:
             pass
 
-    settings = read_json(FILE_PATH)
-    network_mode = settings.get("networkMode", "localhost") if isinstance(settings, dict) else "localhost"
-    return {"ips": ips, "networkMode": network_mode}
+    return {"ips": ips, "networkMode": read_dict(SETTINGS_FILE).get("networkMode", "localhost")}
