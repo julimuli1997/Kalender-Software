@@ -12,25 +12,19 @@ import EventPopover from '../components/EventPopover';
 import CreateTerminModal from '../components/CreateTerminModal';
 import CreateUserModal from '../components/CreateUserModal';
 import AccessDenied from '../components/AccessDenied';
-import { useAuth } from '../components/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
-import { assignColors } from '../utils/colors';
+import { useKalenderData } from '../hooks/useKalenderData';
+import { useTerminActions } from '../hooks/useTerminActions';
 import {
-  fetchTermine,
-  fetchMitarbeiter,
-  fetchAutos,
-  fetchSettings,
   updateSettings,
   fetchNetworkInfo,
-  fetchUsersApi,
   createUserApi,
   deleteUserApi,
   addItemApi,
   deleteItemApi,
-  createTerminApi,
-  updateTerminApi,
-  deleteTerminApi
 } from '../utils/api';
+import { sameId } from '../utils/termine';
 
 import '../styles/Calendar.css';
 
@@ -38,12 +32,12 @@ function AdminPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
-  const [events, setEvents] = useState([]);
-  const [mitarbeiter, setMitarbeiter] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [autos, setAutos] = useState([]);
-  const [visibleDays, setVisibleDays] = useState("1");
-  const [theme, setTheme] = useState('light');
+  const { events, mitarbeiter, autos, users, settings, setSettings, setTermine, reload } =
+    useKalenderData({ includeUsers: isAdmin });
+  const terminActions = useTerminActions({ user, setTermine, reload });
+  const theme = settings.theme ?? 'light';
+  const visibleDays = settings.visibleDays ?? '1';
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
 
@@ -78,172 +72,67 @@ function AdminPage() {
         if (mode === 'localhost' && !isLocal) {
           setAccessDenied(true);
         }
-      } catch (e) { /* silently ignore */ }
+      } catch { /* silently ignore */ }
     };
     checkAccess();
   }, []);
 
-  // Initial data loading
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [tData, mData, aData, sd] = await Promise.all([
-          fetchTermine(),
-          fetchMitarbeiter(),
-          fetchAutos(),
-          fetchSettings()
-        ]);
-
-        if (isAdmin) {
-          const uData = await fetchUsersApi();
-          setUsers(uData);
-        } else {
-          setUsers(mData.map(m => ({ id: m.id, name: m.name, username: m.name.toLowerCase().replace(/\s+/g, ''), role: 'mitarbeiter' })));
-        }
-
-        setMitarbeiter(mData);
-        setEvents(assignColors(tData, mData));
-        setAutos(aData);
-
-        if (sd?.visibleDays) setVisibleDays(sd.visibleDays);
-        if (sd?.theme) {
-          setTheme(sd.theme);
-          if (sd.theme === 'light') document.body.classList.add('light-theme');
-          else document.body.classList.remove('light-theme');
-        } else {
-          document.body.classList.add('light-theme'); 
-        }
-      } catch (e) { console.error(e); }
-    };
-    fetchData();
-  }, [isAdmin]);
-
   const toggleTheme = async () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    document.body.classList.toggle('light-theme');
-    await updateSettings({ theme: newTheme });
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setSettings((s) => ({ ...s, theme: next }));
+    await updateSettings({ theme: next });
   };
 
   const handleSettingsChange = async (e) => {
-    const v = e.target.value;
-    setVisibleDays(v);
-    await updateSettings({ visibleDays: v });
+    const next = e.target.value;
+    setSettings((s) => ({ ...s, visibleDays: next }));
+    await updateSettings({ visibleDays: next });
   };
 
   const handleAddUserSave = async (userData) => {
-    const newUser = await createUserApi(userData);
-    setUsers(prev => [...prev, newUser]);
-    const mData = await fetchMitarbeiter();
-    setMitarbeiter(mData);
-    setEvents(prev => assignColors(prev, mData));
+    await createUserApi(userData);
+    await reload();
   };
 
   const handleDeleteUser = async (userId) => {
     if (!window.confirm("Benutzerkonto und zugehöriges Profil wirklich löschen?")) return;
-    if (await deleteUserApi(userId)) {
-      setUsers(prev => prev.filter(u => u.id !== userId));
-      const mData = await fetchMitarbeiter();
-      setMitarbeiter(mData);
-      setEvents(prev => assignColors(prev, mData));
-    }
+    if (await deleteUserApi(userId)) await reload();
   };
 
   const handleAddAuto = async () => {
     const name = window.prompt('Fahrzeug Name:');
     if (!name) return;
-
-    const { ok, item } = await addItemApi('autos', name);
-    if (ok) {
-      setAutos(prev => [...prev, item]);
-    }
+    const { ok } = await addItemApi('autos', name);
+    if (ok) await reload();
   };
 
   const handleDeleteAuto = async (id) => {
     if (!window.confirm("Fahrzeug wirklich löschen?")) return;
-    if (await deleteItemApi('autos', id)) {
-      setAutos(prev => prev.filter(x => x.id !== id));
-    }
+    if (await deleteItemApi('autos', id)) await reload();
   };
 
-  const handleUpdateBeschreibung = async () => {
-    if (!popoverInfo) return;
-    const currentEvent = popoverInfo.event;
-    
-    const targetMitarbeiterId = currentEvent.extendedProps.mitarbeiter_id;
-    if (!isAdmin && targetMitarbeiterId !== user?.mitarbeiter_id) {
-      window.alert("Sie können nur Beschreibungen eigener Termine ändern.");
-      return;
-    }
-
-    const updatedEventData = {
-      id: currentEvent.id,
-      title: currentEvent.title,
-      start: currentEvent.startStr,
-      end: currentEvent.endStr || currentEvent.startStr,
-      allDay: false,
-      mitarbeiter_id: targetMitarbeiterId,
-      auto_id: currentEvent.extendedProps.auto_id,
-      beschreibung: editBeschreibung
-    };
-
-    try {
-      const ok = await updateTerminApi(updatedEventData.id, updatedEventData);
-      if (ok) {
-        setEvents(prev => assignColors(prev.map(e => e.id === updatedEventData.id ? updatedEventData : e), mitarbeiter));
-        setPopoverInfo(null);
-      } else {
-        window.alert("Fehler beim Speichern der Beschreibung.");
-      }
-    } catch (error) {
-      console.error(error);
-      window.alert("Netzwerkfehler.");
+  const handleSaveNotes = async () => {
+    if (popoverInfo && await terminActions.saveBeschreibung(popoverInfo.event, editBeschreibung)) {
+      setPopoverInfo(null);
     }
   };
 
   const handleDeleteTermin = async () => {
-    if (!popoverInfo) return;
-    const targetMitarbeiterId = popoverInfo.event.extendedProps.mitarbeiter_id;
-    if (!isAdmin && targetMitarbeiterId !== user?.mitarbeiter_id) {
-      window.alert("Sie können nur eigene Termine löschen.");
-      return;
-    }
-
-    if (window.confirm("Termin wirklich löschen?")) {
-      const ok = await deleteTerminApi(popoverInfo.event.id);
-      if (ok) {
-        setEvents(prev => prev.filter(e => e.id !== popoverInfo.event.id));
-        setPopoverInfo(null);
-      }
+    if (popoverInfo && await terminActions.remove(popoverInfo.event)) {
+      setPopoverInfo(null);
     }
   };
 
   const handleCreateTerminSave = async () => {
-    const selectedMitarbeiterId = isAdmin ? formData.mitarbeiter_id : (user?.mitarbeiter_id || formData.mitarbeiter_id);
-    const n = {
-      id: Date.now().toString(),
-      ...formData,
-      mitarbeiter_id: selectedMitarbeiterId,
-      ...newTerminTimes,
-      allDay: false,
-      beschreibung: ''
-    };
-
-    const ok = await createTerminApi(n);
-    if (ok) {
-      setEvents(assignColors([...events, n], mitarbeiter)); 
-      setIsCreateModalOpen(false);
-    } else {
-      window.alert("Fehler beim Erstellen des Termins.");
-    }
+    if (await terminActions.create(formData, newTerminTimes)) setIsCreateModalOpen(false);
   };
 
   const renderEventContent = (info) => (
     <div className="event-card-body">
       <div className="event-card-title">{info.event.title}</div>
       <div className="event-card-meta">
-        <div>👤 {mitarbeiter.find(x => x.id === info.event.extendedProps.mitarbeiter_id)?.name || '-'}</div>
-        <div>🚐 {autos.find(x => x.id === info.event.extendedProps.auto_id)?.name || '-'}</div>
+        <div>👤 {mitarbeiter.find(x => sameId(x.id, info.event.extendedProps.mitarbeiter_id))?.name || '-'}</div>
+        <div>🚐 {autos.find(x => sameId(x.id, info.event.extendedProps.auto_id))?.name || '-'}</div>
       </div>
     </div>
   );
@@ -314,26 +203,7 @@ function AdminPage() {
               });
             }}
             eventDrop={async (info) => {
-              const ownerId = info.event.extendedProps.mitarbeiter_id;
-              if (!isAdmin && ownerId !== user?.mitarbeiter_id) {
-                info.revert();
-                window.alert("Sie können nur eigene Termine verschieben.");
-                return;
-              }
-
-              const up = { 
-                id: info.event.id, 
-                title: info.event.title, 
-                start: info.event.startStr, 
-                end: info.event.endStr || info.event.startStr, 
-                allDay: false, 
-                mitarbeiter_id: info.event.extendedProps.mitarbeiter_id, 
-                auto_id: info.event.extendedProps.auto_id, 
-                beschreibung: info.event.extendedProps.beschreibung || '' 
-              };
-              setEvents(prev => assignColors(prev.map(e => e.id === up.id ? up : e), mitarbeiter));
-              const ok = await updateTerminApi(up.id, up);
-              if (!ok) info.revert();
+              if (!(await terminActions.move(info.event))) info.revert();
             }}
           />
         </div>
@@ -345,7 +215,7 @@ function AdminPage() {
         autos={autos}
         editBeschreibung={editBeschreibung}
         setEditBeschreibung={setEditBeschreibung}
-        onSaveNotes={handleUpdateBeschreibung}
+        onSaveNotes={handleSaveNotes}
         onDeleteTermin={handleDeleteTermin}
         onClose={() => setPopoverInfo(null)}
       />
@@ -354,7 +224,7 @@ function AdminPage() {
         isOpen={isCreateModalOpen}
         formData={formData}
         setFormData={setFormData}
-        mitarbeiter={isAdmin ? mitarbeiter : mitarbeiter.filter(m => m.id === user?.mitarbeiter_id)}
+        mitarbeiter={isAdmin ? mitarbeiter : mitarbeiter.filter(m => sameId(m.id, user?.mitarbeiter_id))}
         autos={autos}
         onSave={handleCreateTerminSave}
         onClose={() => setIsCreateModalOpen(false)}

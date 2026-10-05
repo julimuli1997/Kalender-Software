@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_URL, getAuthHeaders } from '../utils/api';
+import { fetchNetworkInfo, updateSettings } from '../utils/api';
 
 function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onVisibleDaysChange, isAdmin }) {
   const navigate = useNavigate();
@@ -12,9 +12,7 @@ function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onV
   // Fetch network info when panel opens
   useEffect(() => {
     if (!isOpen) return;
-    setLoadingNetwork(true);
-    fetch(`${API_URL}/network-info`, { headers: getAuthHeaders() })
-      .then(r => r.json())
+    fetchNetworkInfo()
       .then(data => {
         setServerIps(data.ips || []);
         setNetworkMode(data.networkMode || 'localhost');
@@ -26,11 +24,7 @@ function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onV
   // Save networkMode setting to backend
   const handleNetworkModeChange = async (mode) => {
     setNetworkMode(mode);
-    await fetch(`${API_URL}/settings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({ networkMode: mode }),
-    });
+    await updateSettings({ networkMode: mode });
   };
 
   const handleCopy = (url) => {
