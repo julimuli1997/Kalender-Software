@@ -1153,3 +1153,75 @@ body.light-theme .access-denied-title { color: var(--text-main) !important; }
   border: 1px solid var(--border-color);
 }
 .settings-link-row:hover { border-color: var(--primary); }
+
+/* ── TV view layout (KalenderPage) ── */
+.tv-calendar-multi-columns {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  padding: 1rem;
+  height: calc(100vh - 80px);
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+.tv-empty {
+  text-align: center;
+  margin: auto;
+  opacity: 0.7;
+}
+
+.tv-employee-column {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--surface);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  border-top: 6px solid var(--accent);
+  overflow: hidden;
+}
+
+.tv-employee-head {
+  padding: 0.8rem 1rem;
+  background-color: var(--surface-bright);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tv-employee-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.tv-employee-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  background-color: var(--accent);
+  color: #fff;
+}
+
+.tv-employee-body {
+  flex: 1;
+  height: 100%;
+  position: relative;
+}
+
+.event-card-meta-tv {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding-top: 6px;
+}
+
+.tv-meta-note {
+  opacity: 0.85;
+  margin-top: 4px;
+}

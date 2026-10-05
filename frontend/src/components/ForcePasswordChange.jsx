@@ -1,4 +1,4 @@
-import { useAuth } from './AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import MyPasswordPanel from './admin-config/MyPasswordPanel';
 import '../styles/AdminConfig.css';
 
