@@ -12,6 +12,7 @@ const FIELDS = [
   { key: 'max_failed_attempts', label: 'Fehlversuche bis Sperre (0 = aus)', type: 'number', min: 0, max: 50 },
   { key: 'lockout_minutes', label: 'Sperrdauer (Min.)', type: 'number', min: 1, max: 1440 },
   { key: 'allow_self_password_change', label: 'Mitarbeiter dürfen ihr Passwort selbst ändern', type: 'bool' },
+  { key: 'public_calendar_view', label: 'TV-Ansicht ohne Login anzeigen (aus: Anmeldung nötig, auch am TV)', type: 'bool' },
 ];
 
 function SecuritySettingsPanel() {
