@@ -28,6 +28,18 @@ def read_json(filename):
             return []
 
 
+def read_list(filename) -> list:
+    """read_json for files that must hold a list (anything else counts as empty)."""
+    data = read_json(filename)
+    return data if isinstance(data, list) else []
+
+
+def read_dict(filename) -> dict:
+    """read_json for files that must hold an object (anything else counts as empty)."""
+    data = read_json(filename)
+    return data if isinstance(data, dict) else {}
+
+
 def write_json(filename, data):
     with db_lock:
         # Write to a temp file and swap it in, so a crash mid-write cannot truncate the real file.

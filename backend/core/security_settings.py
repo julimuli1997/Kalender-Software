@@ -4,9 +4,8 @@ Single source of truth for password policy, session lifetime and login
 lockout. Everything else reads through `get_security_settings()` so changes
 made on the admin config page apply immediately without a restart.
 """
-from core.database import read_json, write_json
-
-SECURITY_FILE = "security.json"
+from core.database import read_dict, write_json
+from core.paths import SECURITY_FILE
 
 # key -> (default, min, max); bool settings use (default, None, None)
 SCHEMA = {
@@ -24,9 +23,7 @@ DEFAULTS = {k: v[0] for k, v in SCHEMA.items()}
 
 
 def get_security_settings() -> dict:
-    stored = read_json(SECURITY_FILE)
-    if not isinstance(stored, dict):
-        stored = {}
+    stored = read_dict(SECURITY_FILE)
     return {**DEFAULTS, **{k: v for k, v in stored.items() if k in SCHEMA}}
 
 

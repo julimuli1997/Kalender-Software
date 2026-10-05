@@ -4,10 +4,8 @@ import secrets
 import time
 from fastapi import HTTPException, Header, Depends
 from typing import Optional
-from core.database import read_json, write_json
+from core.roles import ADMIN
 from core.security_settings import get_security_settings
-
-USERS_FILE = "users.json"
 SESSIONS = {}  # token -> user_dict
 
 def hash_password(password: str, salt: Optional[str] = None) -> tuple[str, str]:
@@ -86,14 +84,6 @@ def get_session_user(authorization: Optional[str] = Header(None)) -> dict:
 def get_current_user(user: dict = Depends(get_session_user)) -> dict:
     return _ensure_password_changed(user)
 
-def get_optional_user(authorization: Optional[str] = Header(None)) -> Optional[dict]:
-    if not authorization:
-        return None
-    try:
-        return get_current_user(_authenticate(authorization))
-    except HTTPException:
-        return None
-
 def calendar_view_is_public() -> bool:
     return get_security_settings()["public_calendar_view"]
 
@@ -103,7 +93,15 @@ def require_calendar_view(authorization: Optional[str] = Header(None)) -> Option
         return None
     return _ensure_password_changed(_authenticate(authorization))
 
+def is_admin(user: dict) -> bool:
+    return user.get("role") == ADMIN
+
 def require_admin(user: dict = Depends(get_current_user)) -> dict:
-    if user.get("role") != "admin":
+    if not is_admin(user):
         raise HTTPException(status_code=403, detail="Nur für Administratoren gestattet")
     return user
+
+def ensure_can_edit(user: dict, mitarbeiter_id, action: str) -> None:
+    """Admins may touch any appointment, everyone else only their own (`action`: 'erstellen', 'löschen', ...)."""
+    if not is_admin(user) and str(mitarbeiter_id) != str(user.get("mitarbeiter_id")):
+        raise HTTPException(status_code=403, detail=f"Sie können nur eigene Termine {action}.")
