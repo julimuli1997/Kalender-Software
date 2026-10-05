@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const API_URL = `${window.location.origin}/api`;
+import { API_URL, getAuthHeaders } from '../utils/api';
 
 function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onVisibleDaysChange, isAdmin }) {
   const navigate = useNavigate();
@@ -14,7 +13,7 @@ function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onV
   useEffect(() => {
     if (!isOpen) return;
     setLoadingNetwork(true);
-    fetch(`${API_URL}/network-info`)
+    fetch(`${API_URL}/network-info`, { headers: getAuthHeaders() })
       .then(r => r.json())
       .then(data => {
         setServerIps(data.ips || []);
@@ -29,7 +28,7 @@ function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onV
     setNetworkMode(mode);
     await fetch(`${API_URL}/settings`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ networkMode: mode }),
     });
   };

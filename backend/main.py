@@ -10,11 +10,12 @@ os.chdir(BASE_DIR)
 # Ensure current directory is in sys.path for module resolution
 sys.path.insert(0, BASE_DIR)
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
+from core.auth import calendar_view_is_public, user_for_token
 from core.websocket import manager
 from routers import mitarbeiter, autos, termine, settings, users, user_admin, account, admin_security
 from routers.users import ensure_default_admin
@@ -28,14 +29,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="BTL Kalender Software", lifespan=lifespan)
 
-# CORS middleware configuration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# The frontend is served by this app (same origin), so CORS is off by default.
+# For a separately hosted frontend: KALENDER_CORS_ORIGINS="https://a.example,https://b.example"
+cors_origins = [o.strip() for o in os.environ.get("KALENDER_CORS_ORIGINS", "").split(",") if o.strip()]
+if cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Register API Routers
 app.include_router(users.router)
@@ -50,6 +53,15 @@ app.include_router(settings.router)
 # WebSocket Endpoint
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    # Open for the TV view unless the admin requires a login; the token comes as ?token=...
+    if not calendar_view_is_public():
+        try:
+            user = user_for_token(websocket.query_params.get("token"))
+            if user.get("must_change_password"):
+                raise HTTPException(status_code=403)
+        except HTTPException:
+            await websocket.close(code=4401)
+            return
     await manager.connect(websocket)
     try:
         while True:
