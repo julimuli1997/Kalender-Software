@@ -4,7 +4,7 @@ import timegridPlugin from '@fullcalendar/timegrid';
 import deLocale from '@fullcalendar/core/locales/de';
 import TvHeader from '../components/TvHeader';
 import { assignColors, odooColors } from '../utils/colors';
-import { fetchTermine, fetchMitarbeiter, fetchAutos, fetchSettings } from '../utils/api';
+import { fetchTermine, fetchMitarbeiter, fetchAutos, fetchSettings, wsUrl } from '../utils/api';
 import '../styles/Calendar.css';
 
 function KalenderPage() {
@@ -39,8 +39,7 @@ function KalenderPage() {
     };
     
     fetchData();
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
+    const ws = new WebSocket(wsUrl());
     ws.onmessage = (e) => e.data === "update" && fetchData();
     return () => ws.close();
   }, []);

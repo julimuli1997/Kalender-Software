@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { changeOwnPassword } from '../../utils/adminApi';
 
-function MyPasswordPanel() {
+function MyPasswordPanel({ onSuccess }) {
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [message, setMessage] = useState(null);
@@ -13,6 +13,7 @@ function MyPasswordPanel() {
       setCurrent('');
       setNext('');
       setMessage({ type: 'ok', text: 'Passwort geändert.' });
+      onSuccess?.();
     } catch (err) {
       setMessage({ type: 'error', text: err.message });
     }

@@ -17,6 +17,14 @@ export function getAuthHeaders() {
   return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
 
+// WebSocket URL; sends the token so the live updates also work when the calendar view requires a login.
+export function wsUrl() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const token = getAuthToken();
+  const query = token ? `?token=${encodeURIComponent(token)}` : '';
+  return `${protocol}//${window.location.host}/ws${query}`;
+}
+
 export async function loginApi(username, password) {
   const res = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
@@ -76,22 +84,22 @@ export async function deleteUserApi(userId) {
 }
 
 export async function fetchTermine() {
-  const res = await fetch(`${API_URL}/termine`);
+  const res = await fetch(`${API_URL}/termine`, { headers: getAuthHeaders() });
   return res.json();
 }
 
 export async function fetchMitarbeiter() {
-  const res = await fetch(`${API_URL}/mitarbeiter`);
+  const res = await fetch(`${API_URL}/mitarbeiter`, { headers: getAuthHeaders() });
   return res.json();
 }
 
 export async function fetchAutos() {
-  const res = await fetch(`${API_URL}/autos`);
+  const res = await fetch(`${API_URL}/autos`, { headers: getAuthHeaders() });
   return res.json();
 }
 
 export async function fetchSettings() {
-  const res = await fetch(`${API_URL}/settings`);
+  const res = await fetch(`${API_URL}/settings`, { headers: getAuthHeaders() });
   return res.json();
 }
 
@@ -108,7 +116,7 @@ export async function updateSettings(settings) {
 }
 
 export async function fetchNetworkInfo() {
-  const res = await fetch(`${API_URL}/network-info`);
+  const res = await fetch(`${API_URL}/network-info`, { headers: getAuthHeaders() });
   return res.json();
 }
 

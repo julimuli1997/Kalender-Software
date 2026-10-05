@@ -32,7 +32,11 @@ Entfernen mit `deploy\windows\uninstall-startup.ps1`. Voraussetzung: Python 3.12
 (oder eine gebaute `backend\dist-exe\BTL-Kalender.exe`).
 
 ## Wichtig nach der Installation
-- Standard-Login beim ersten Start: `admin` / `admin123` → **sofort** auf der
-  Konfigurationsseite (Einstellungen ⚙️ → Konfiguration → Mein Konto) ändern.
-- Daten liegen in `backend/*.json` – regelmäßig sichern.
+- Standard-Login beim ersten Start: `admin` / `admin123`. Die App verlangt direkt nach dem
+  ersten Login ein neues Passwort und sperrt bis dahin alles andere.
+- Daten liegen in `backend/*.json` – regelmäßig sichern. Die Dateien sind per `.gitignore` nicht im
+  Repository; ein `git pull` auf dem Server berührt sie nicht (außer das Repo wurde vor dem
+  Aufräumen geklont: dann vorher sichern).
+- TV-Ansicht ohne Login ist Standard. Unter Konfiguration → Sicherheit lässt sich das abschalten.
+- Tests: `cd backend && pip install -r requirements-dev.txt && pytest`
 - Das Programm mit `--no-browser` öffnet keinen Browser (für Server/Autostart).
