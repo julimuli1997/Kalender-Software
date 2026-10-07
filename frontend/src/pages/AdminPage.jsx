@@ -9,7 +9,7 @@ import SettingsPanel from '../components/SettingsPanel';
 import Header from '../components/Header';
 import AdminSidebar from '../components/AdminSidebar';
 import EventPopover from '../components/EventPopover';
-import CreateTerminModal from '../components/CreateTerminModal';
+import TerminModal from '../components/TerminModal';
 import CreateUserModal from '../components/CreateUserModal';
 import AccessDenied from '../components/AccessDenied';
 import { useAuth } from '../hooks/useAuth';
@@ -24,7 +24,7 @@ import {
   addItemApi,
   deleteItemApi,
 } from '../utils/api';
-import { sameId } from '../utils/termine';
+import { assignedIds, emptyForm, formFromEvent, sameId } from '../utils/termine';
 
 import '../styles/Calendar.css';
 
@@ -43,8 +43,8 @@ function AdminPage() {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
-  const [newTerminTimes, setNewTerminTimes] = useState({ start: '', end: '', allDay: false });
-  const [formData, setFormData] = useState({ title: '', mitarbeiter_id: '', auto_id: '' });
+  const [editingEvent, setEditingEvent] = useState(null); // set while the form edits an existing appointment
+  const [formData, setFormData] = useState(emptyForm());
 
   const [popoverInfo, setPopoverInfo] = useState(null);
   const [editBeschreibung, setEditBeschreibung] = useState('');
@@ -123,16 +123,33 @@ function AdminPage() {
     }
   };
 
-  const handleCreateTerminSave = async () => {
-    if (await terminActions.create(formData, newTerminTimes)) setIsCreateModalOpen(false);
+  const handleEditTermin = () => {
+    if (!popoverInfo) return;
+    setEditingEvent(popoverInfo.event);
+    setFormData(formFromEvent(popoverInfo.event));
+    setPopoverInfo(null);
+    setIsCreateModalOpen(true);
+  };
+
+  const closeTerminModal = () => {
+    setIsCreateModalOpen(false);
+    setEditingEvent(null);
+  };
+
+  const handleTerminSave = async () => {
+    const saved = editingEvent
+      ? await terminActions.edit(editingEvent, formData)
+      : await terminActions.create(formData);
+    if (saved) closeTerminModal();
   };
 
   const renderEventContent = (info) => (
     <div className="event-card-body">
       <div className="event-card-title">{info.event.title}</div>
       <div className="event-card-meta">
-        <div>👤 {mitarbeiter.find(x => sameId(x.id, info.event.extendedProps.mitarbeiter_id))?.name || '-'}</div>
+        <div>👤 {assignedIds(info.event.extendedProps).map(id => mitarbeiter.find(x => sameId(x.id, id))?.name).filter(Boolean).join(', ') || '-'}</div>
         <div>🚐 {autos.find(x => sameId(x.id, info.event.extendedProps.auto_id))?.name || '-'}</div>
+        {info.event.extendedProps.ort && <div>📍 {info.event.extendedProps.ort}</div>}
       </div>
     </div>
   );
@@ -182,12 +199,12 @@ function AdminPage() {
             headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }}
             select={(info) => {
               setPopoverInfo(null); 
-              setNewTerminTimes({ start: info.startStr, end: info.endStr, allDay: false });
-              setFormData({
-                title: '',
-                mitarbeiter_id: isAdmin ? '' : (user?.mitarbeiter_id || ''),
-                auto_id: ''
-              });
+              setEditingEvent(null);
+              setFormData(emptyForm(
+                info.start,
+                info.end,
+                !isAdmin && user?.mitarbeiter_id ? [String(user.mitarbeiter_id)] : [],
+              ));
               setIsCreateModalOpen(true);
             }}
             eventClick={(info) => {
@@ -211,23 +228,27 @@ function AdminPage() {
 
       <EventPopover
         popoverInfo={popoverInfo}
+        user={user}
         mitarbeiter={mitarbeiter}
         autos={autos}
         editBeschreibung={editBeschreibung}
         setEditBeschreibung={setEditBeschreibung}
         onSaveNotes={handleSaveNotes}
+        onEditTermin={handleEditTermin}
         onDeleteTermin={handleDeleteTermin}
         onClose={() => setPopoverInfo(null)}
       />
 
-      <CreateTerminModal
+      <TerminModal
         isOpen={isCreateModalOpen}
+        heading={editingEvent ? '✏️ Termin bearbeiten' : '📅 Neuer Termin'}
         formData={formData}
         setFormData={setFormData}
-        mitarbeiter={isAdmin ? mitarbeiter : mitarbeiter.filter(m => sameId(m.id, user?.mitarbeiter_id))}
+        mitarbeiter={mitarbeiter}
         autos={autos}
-        onSave={handleCreateTerminSave}
-        onClose={() => setIsCreateModalOpen(false)}
+        lockedMitarbeiterId={isAdmin ? null : user?.mitarbeiter_id}
+        onSave={handleTerminSave}
+        onClose={closeTerminModal}
       />
 
       <CreateUserModal
