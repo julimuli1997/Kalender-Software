@@ -1,5 +1,5 @@
 import { createTerminApi, updateTerminApi, deleteTerminApi } from '../utils/api';
-import { canEdit, newTermin, sameId, toTerminPayload } from '../utils/termine';
+import { canEdit, newTermin, resolveAssignment, sameId, toTerminPayload } from '../utils/termine';
 
 /**
  * Create / edit / move / delete appointments for the admin calendar.
@@ -9,11 +9,8 @@ export function useTerminActions({ user, setTermine, reload }) {
   const replace = (payload) =>
     setTermine((prev) => prev.map((t) => (sameId(t.id, payload.id) ? payload : t)));
 
-  const create = async (formData, times) => {
-    const mitarbeiterId = user?.role === 'admin'
-      ? formData.mitarbeiter_id
-      : (user?.mitarbeiter_id || formData.mitarbeiter_id);
-    if (!(await createTerminApi(newTermin(formData, times, mitarbeiterId)))) {
+  const create = async (form) => {
+    if (!(await createTerminApi(newTermin(form, resolveAssignment(user, form.mitarbeiter_ids))))) {
       window.alert('Fehler beim Erstellen des Termins.');
       return false;
     }
@@ -37,6 +34,15 @@ export function useTerminActions({ user, setTermine, reload }) {
   const saveBeschreibung = (event, beschreibung) =>
     update(event, { beschreibung }, 'Sie können nur Beschreibungen eigener Termine ändern.', 'Fehler beim Speichern der Beschreibung.');
 
+  // Full edit from the form: details, time and the list of employees.
+  const edit = (event, form) =>
+    update(
+      event,
+      { ...form, ...resolveAssignment(user, form.mitarbeiter_ids, event.extendedProps.mitarbeiter_id) },
+      'Sie können nur eigene Termine bearbeiten.',
+      'Fehler beim Speichern des Termins.',
+    );
+
   const move = (event) => update(event, {}, 'Sie können nur eigene Termine verschieben.');
 
   const remove = async (event) => {
@@ -50,5 +56,5 @@ export function useTerminActions({ user, setTermine, reload }) {
     return true;
   };
 
-  return { create, saveBeschreibung, move, remove };
+  return { create, edit, saveBeschreibung, move, remove };
 }

@@ -5,7 +5,7 @@ import deLocale from '@fullcalendar/core/locales/de';
 import TvHeader from '../components/TvHeader';
 import { useKalenderData } from '../hooks/useKalenderData';
 import { odooColors } from '../utils/colors';
-import { sameId } from '../utils/termine';
+import { STATUS, assignedIds, sameId } from '../utils/termine';
 import '../styles/Calendar.css';
 
 function KalenderPage() {
@@ -23,6 +23,17 @@ function KalenderPage() {
       <div className="event-card-title-tv">{info.event.title}</div>
       <div className="event-card-meta-tv">
         <div className="tv-meta-row">🚐 {autos.find(x => sameId(x.id, info.event.extendedProps.auto_id))?.name || '-'}</div>
+        {info.event.extendedProps.ort && (
+          <div className="tv-meta-row">📍 {info.event.extendedProps.ort}</div>
+        )}
+        {assignedIds(info.event.extendedProps).length > 1 && (
+          <div className="tv-meta-row">
+            👥 {assignedIds(info.event.extendedProps).map(id => mitarbeiter.find(x => sameId(x.id, id))?.name).filter(Boolean).join(', ')}
+          </div>
+        )}
+        {info.event.extendedProps.status && info.event.extendedProps.status !== 'geplant' && (
+          <div className="tv-meta-row">● {STATUS[info.event.extendedProps.status]}</div>
+        )}
         {info.event.extendedProps.beschreibung && (
           <div className="tv-meta-row tv-meta-note">
             📝 {info.event.extendedProps.beschreibung}
@@ -41,7 +52,7 @@ function KalenderPage() {
           <div className="tv-empty">Keine Mitarbeiter vorhanden.</div>
         ) : (
           mitarbeiter.map((m, index) => {
-            const mEvents = events.filter(e => sameId(e.mitarbeiter_id, m.id));
+            const mEvents = events.filter(e => assignedIds(e).some(id => sameId(id, m.id)));
             const accentColor = mEvents[0]?.backgroundColor || odooColors[index % odooColors.length];
 
             return (
