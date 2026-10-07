@@ -1327,3 +1327,8 @@ textarea.termin-input { resize: vertical; }
 .popover-status.status-abgesagt { background: #6c757d; border-color: #6c757d; color: #fff; }
 .popover-link { color: var(--primary); text-decoration: none; }
 .popover-footer { flex-wrap: wrap; }
+
+/* TV view: two days per employee need more room; the row then pans automatically (useAutoScroll) */
+.tv-days-2 .tv-employee-column { min-width: 560px; }
+.tv-calendar-multi-columns { scrollbar-width: none; }
+.tv-calendar-multi-columns::-webkit-scrollbar { display: none; }

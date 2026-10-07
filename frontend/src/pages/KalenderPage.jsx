@@ -1,16 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import timegridPlugin from '@fullcalendar/timegrid';
 import deLocale from '@fullcalendar/core/locales/de';
 import TvHeader from '../components/TvHeader';
 import { useKalenderData } from '../hooks/useKalenderData';
+import { useAutoScroll } from '../hooks/useAutoScroll';
 import { odooColors } from '../utils/colors';
-import { STATUS, assignedIds, sameId } from '../utils/termine';
+import { STATUS, assignedIds, sameId, tvDayCount } from '../utils/termine';
 import '../styles/Calendar.css';
 
 function KalenderPage() {
-  const { events, mitarbeiter, autos } = useKalenderData();
+  const { events, mitarbeiter, autos, settings } = useKalenderData();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const dayCount = tvDayCount(settings.visibleDays);
+  const columnsRef = useRef(null);
+  useAutoScroll(columnsRef, [mitarbeiter.length, dayCount, events.length]);
+
+  // Only today (and tomorrow); the count in each column header covers just these days.
+  const rangeStart = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate());
+  const rangeEnd = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), rangeStart.getDate() + dayCount);
+  const todayKey = rangeStart.toDateString();
+  const inRange = (e) => new Date(e.start) < rangeEnd && new Date(e.end || e.start) > rangeStart;
 
   // Live clock for TV dashboard
   useEffect(() => {
@@ -47,7 +57,7 @@ function KalenderPage() {
     <div className="tv-screen-wrapper">
       <TvHeader currentTime={currentTime} />
 
-      <div className="tv-calendar-multi-columns">
+      <div className={`tv-calendar-multi-columns tv-days-${dayCount}`} ref={columnsRef}>
         {mitarbeiter.length === 0 ? (
           <div className="tv-empty">Keine Mitarbeiter vorhanden.</div>
         ) : (
@@ -59,13 +69,15 @@ function KalenderPage() {
               <div key={m.id} className="tv-employee-column" style={{ '--accent': accentColor }}>
                 <div className="tv-employee-head">
                   <h3 className="tv-employee-name">👤 {m.name}</h3>
-                  <span className="tv-employee-count">{mEvents.length} Termine</span>
+                  <span className="tv-employee-count">{mEvents.filter(inRange).length} Termine</span>
                 </div>
 
                 <div className="tv-employee-body">
                   <FullCalendar
                     plugins={[timegridPlugin]}
-                    initialView="timeGridDay"
+                    key={`${dayCount}-${todayKey}`}
+                    initialView="tvDays"
+                    views={{ tvDays: { type: 'timeGrid', duration: { days: dayCount } } }}
                     locale={deLocale}
                     weekends={true}
                     allDaySlot={false}

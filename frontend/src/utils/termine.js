@@ -10,6 +10,9 @@ export const STATUS = {
   abgesagt: 'Abgesagt',
 };
 
+// "TV-Ansicht Tage": only today ('1') or today and tomorrow ('2'); older stored values count as '2'.
+export const tvDayCount = (visibleDays) => (Number(visibleDays) >= 2 ? 2 : 1);
+
 // Admins may edit everything, everyone else only their own appointments.
 export function canEdit(user, mitarbeiterId) {
   if (user?.role === 'admin') return true;

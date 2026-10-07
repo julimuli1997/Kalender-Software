@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canEdit, sameId, toTerminPayload, newTermin, assignedIds, resolveAssignment, validateForm, toLocalInput } from '../utils/termine';
+import { canEdit, sameId, toTerminPayload, newTermin, assignedIds, resolveAssignment, tvDayCount, validateForm, toLocalInput } from '../utils/termine';
 
 describe('canEdit', () => {
   it('lets admins edit everything', () => {
@@ -66,5 +66,14 @@ describe('toLocalInput', () => {
   it('formats local time for datetime-local inputs', () => {
     expect(toLocalInput(new Date(2026, 4, 9, 8, 5))).toBe('2026-05-09T08:05');
     expect(toLocalInput('')).toBe('');
+  });
+});
+
+describe('tvDayCount', () => {
+  it('shows only today or today and tomorrow', () => {
+    expect(tvDayCount('1')).toBe(1);
+    expect(tvDayCount('2')).toBe(2);
+    expect(tvDayCount('5')).toBe(2);
+    expect(tvDayCount(undefined)).toBe(1);
   });
 });
