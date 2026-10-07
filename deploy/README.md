@@ -34,7 +34,9 @@ Entfernen mit `deploy\windows\uninstall-startup.ps1`. Voraussetzung: Python 3.12
 ## Wichtig nach der Installation
 - Standard-Login beim ersten Start: `admin` / `admin123`. Die App verlangt direkt nach dem
   ersten Login ein neues Passwort und sperrt bis dahin alles andere.
-- Daten liegen in `backend/*.json` – regelmäßig sichern. Die Dateien sind per `.gitignore` nicht im
+- Daten liegen standardmäßig in `backend/*.json` – regelmäßig sichern. Optional lassen sie sich in
+  MySQL/MariaDB speichern: siehe [MYSQL.md](MYSQL.md).
+  Die JSON-Dateien sind per `.gitignore` nicht im
   Repository; ein `git pull` auf dem Server berührt sie nicht (außer das Repo wurde vor dem
   Aufräumen geklont: dann vorher sichern).
 - TV-Ansicht ohne Login ist Standard. Unter Konfiguration → Sicherheit lässt sich das abschalten.
