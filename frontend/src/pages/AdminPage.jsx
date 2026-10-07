@@ -24,7 +24,7 @@ import {
   addItemApi,
   deleteItemApi,
 } from '../utils/api';
-import { assignedIds, emptyForm, formFromEvent, sameId } from '../utils/termine';
+import { assignedIds, emptyForm, formFromEvent, sameId, tvDayCount } from '../utils/termine';
 
 import '../styles/Calendar.css';
 
@@ -36,7 +36,7 @@ function AdminPage() {
     useKalenderData({ includeUsers: isAdmin });
   const terminActions = useTerminActions({ user, setTermine, reload });
   const theme = settings.theme ?? 'light';
-  const visibleDays = settings.visibleDays ?? '1';
+  const visibleDays = String(tvDayCount(settings.visibleDays));
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
