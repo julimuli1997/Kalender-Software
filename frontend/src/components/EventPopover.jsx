@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { STATUS, assignedIds, canEdit, sameId } from '../utils/termine';
 
 const formatTime = (date) => {
@@ -32,6 +32,16 @@ function EventPopover({
   onDeleteTermin,
   onClose
 }) {
+  const cardRef = useRef(null);
+
+  // The card's height depends on the details shown: pull it up so the footer buttons stay on screen.
+  useLayoutEffect(() => {
+    const card = cardRef.current;
+    if (!card || !popoverInfo) return;
+    const overflow = card.getBoundingClientRect().bottom - (window.innerHeight - 10);
+    card.style.top = `${Math.max(10, popoverInfo.y - Math.max(0, overflow))}px`;
+  }, [popoverInfo, editBeschreibung]);
+
   if (!popoverInfo) return null;
 
   const { event } = popoverInfo;
@@ -43,6 +53,7 @@ function EventPopover({
 
   return (
     <div 
+      ref={cardRef}
       className="odoo-popover-card popover-with-form" 
       style={{ top: popoverInfo.y, left: popoverInfo.x, zIndex: 9995 }}
     >
