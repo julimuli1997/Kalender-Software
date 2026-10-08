@@ -176,6 +176,34 @@
 .sidebar-item-sub { font-size: 0.75rem; color: var(--text-muted); padding-left: 1.4rem; }
 .sidebar-item-sub .role { text-transform: capitalize; }
 
+/* Admins and employees as separate, collapsible groups inside "Mitarbeiter & Accounts" */
+.sidebar-user-group { margin-bottom: 12px; }
+.sidebar-user-group:last-child { margin-bottom: 0; }
+.sidebar-user-group-head {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 6px 8px; margin-bottom: 8px;
+  background: transparent; color: var(--text-muted); border: none; border-radius: 6px;
+  cursor: pointer; text-align: left;
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.sidebar-user-group-head:hover { background: var(--surface-bright); color: var(--text-main); }
+.sidebar-user-group-title { flex: 1; }
+.sidebar-user-group-count {
+  padding: 1px 8px; border-radius: 10px; font-size: 0.72rem;
+  background: var(--surface-bright); color: var(--text-main); border: 1px solid var(--border-color);
+}
+.sidebar-header-toggle {
+  display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
+  padding: 0; background: transparent; color: var(--text-main); border: none;
+  cursor: pointer; text-align: left;
+}
+.sidebar-header.collapsed { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.sidebar-chevron { display: inline-block; font-size: 0.6rem; transition: transform 0.15s; }
+.sidebar-chevron.open { transform: rotate(90deg); }
+.sidebar-user-group .sidebar-item:last-child { margin-bottom: 0; }
+.sidebar-user-group-admin .sidebar-item { border-left: 4px solid var(--primary); }
+.sidebar-user-group-admin .sidebar-user-group-count { background: var(--primary); border-color: var(--primary); color: #fff; }
+
 /* --- 5. FULLCALENDAR & BUTTONS (ODOO STYLE) --- */
 .calendar-main-container {
   flex: 1;
