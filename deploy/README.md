@@ -31,6 +31,76 @@ Der Task startet beim Booten (ohne Anmeldung) als SYSTEM und startet sich bei Ab
 Entfernen mit `deploy\windows\uninstall-startup.ps1`. Voraussetzung: Python 3.12+ im PATH
 (oder eine gebaute `backend\dist-exe\BTL-Kalender.exe`).
 
+## 3. Updates / Patches einspielen
+
+Reihenfolge: Dienst stoppen → Code holen → Abhängigkeiten → Frontend neu bauen → nach
+`backend/dist` kopieren → Dienst starten. Vorher die Daten sichern (`backend/*.json` bzw. `mysqldump`).
+Alle Befehle im Hauptordner des Repositories ausführen.
+
+**Linux – ein Befehl** (ohne sudo starten; das Skript fragt nur für den Neustart danach):
+```bash
+./deploy/linux/update.sh
+```
+Das Skript baut zuerst und startet den Dienst erst danach neu. Schlägt der Build fehl, läuft die
+alte Version unverändert weiter. Am Ende prüft es, ob der Server den neuen Build ausliefert.
+
+**Linux – von Hand**
+```bash
+sudo systemctl stop kalender
+git pull
+backend/venv/bin/pip install -r backend/requirements.txt
+(cd frontend && npm install && npm run build)
+rm -rf backend/dist && cp -r frontend/dist backend/dist
+sudo systemctl start kalender
+```
+
+**Windows** (Administrator-PowerShell)
+```powershell
+Stop-ScheduledTask -TaskName BTL-Kalender
+git pull
+backend\venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+cd frontend; npm install; npm run build; cd ..
+Remove-Item backend\dist -Recurse -Force; Copy-Item frontend\dist backend\dist -Recurse
+Start-ScheduledTask -TaskName BTL-Kalender
+```
+Läuft der Task mit der gebauten `BTL-Kalender.exe`, wirken Backend-Änderungen erst nach einem
+neuen Build der exe. Die exe sucht den Ordner `dist` außerdem neben sich selbst, nicht in `backend\dist`.
+
+**Prüfen, ob die neue Version ausgeliefert wird** – beide Befehle müssen denselben Dateinamen zeigen:
+```bash
+grep -o 'index-[^"]*\.js' frontend/dist/index.html
+curl -s http://localhost:8000/ | grep -o 'index-[^"]*\.js'
+```
+- Namen verschieden: `backend/dist` wurde vor dem Kopieren nicht gelöscht (dann liegt der neue Build
+  in `backend/dist/dist`), der Build ist fehlgeschlagen oder es läuft noch ein alter Prozess.
+- Namen gleich, im Browser aber alt: Seite hart neu laden (Strg+Umschalt+R), auch auf dem TV.
+
+## 4. Dienst stoppen / starten / neu starten
+
+**Linux**
+```bash
+sudo systemctl stop kalender
+sudo systemctl start kalender
+sudo systemctl restart kalender      # stoppen + starten in einem Schritt
+systemctl status kalender            # läuft er?
+journalctl -u kalender -f            # Logs
+```
+
+**Windows** (Administrator-PowerShell)
+```powershell
+Stop-ScheduledTask -TaskName BTL-Kalender
+Start-ScheduledTask -TaskName BTL-Kalender
+Get-ScheduledTask -TaskName BTL-Kalender | Get-ScheduledTaskInfo    # Status
+```
+
+**Ohne Dienst (von Hand gestartet)**
+```bash
+lsof -nP -iTCP:8000 -sTCP:LISTEN     # PID des laufenden Prozesses finden
+kill <PID>                           # stoppen (oder Strg+C im Terminal)
+cd backend && venv/bin/python main.py --no-browser    # starten
+```
+Immer nur eine Instanz laufen lassen: erst stoppen, dann starten.
+
 ## Wichtig nach der Installation
 - Standard-Login beim ersten Start: `admin` / `admin123`. Die App verlangt direkt nach dem
   ersten Login ein neues Passwort und sperrt bis dahin alles andere.
