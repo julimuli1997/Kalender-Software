@@ -123,7 +123,14 @@ async def delete_user(user_id: str, admin: dict = Depends(require_admin)):
         # Also clean up the employee entry and the appointments that would be orphaned
         m_id = str(user_to_del.get("mitarbeiter_id") or user_id)
         write_json(MITARBEITER_FILE, [m for m in read_list(MITARBEITER_FILE) if str(m.get("id")) != m_id])
-        write_json(TERMINE_FILE, [t for t in read_list(TERMINE_FILE) if str(t.get("mitarbeiter_id")) != m_id])
+        remaining = []
+        for t in read_list(TERMINE_FILE):
+            if str(t.get("mitarbeiter_id")) == m_id:
+                continue
+            if m_id in t.get("mitarbeiter_ids", []):  # just one of several employees: stays, minus them
+                t["mitarbeiter_ids"] = [i for i in t["mitarbeiter_ids"] if i != m_id]
+            remaining.append(t)
+        write_json(TERMINE_FILE, remaining)
 
     await manager.broadcast("update")
     return {"status": "ok"}

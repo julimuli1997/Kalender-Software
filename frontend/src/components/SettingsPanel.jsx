@@ -103,7 +103,7 @@ function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onV
             <div className="settings-row">
               <div className="settings-row-info">
                 <span className="settings-row-title">TV-Ansicht Tage</span>
-                <span className="settings-row-desc">Wie viele Tage werden angezeigt</span>
+                <span className="settings-row-desc">Welche Tage die TV-Ansicht zeigt</span>
               </div>
               <div className="settings-select-box">
                 <select
@@ -111,9 +111,8 @@ function SettingsPanel({ isOpen, onClose, theme, onThemeChange, visibleDays, onV
                   onChange={onVisibleDaysChange}
                   id="settings-visible-days"
                 >
-                  {[1, 2, 3, 5].map(d => (
-                    <option key={d} value={d}>{d} {d === 1 ? 'Tag' : 'Tage'}</option>
-                  ))}
+                  <option value="1">Nur heute</option>
+                  <option value="2">Heute und morgen</option>
                 </select>
               </div>
             </div>

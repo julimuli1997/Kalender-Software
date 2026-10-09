@@ -53,3 +53,26 @@ def test_websocket_requires_token_when_calendar_is_closed(client, admin):
     token = admin["Authorization"].split()[1]
     with client.websocket_connect(f"/ws?token={token}"):
         pass
+
+
+def test_multiple_employees_and_details(client, admin, make_user):
+    h_max, max_ = make_user("max", "Max")
+    _, eva = make_user("eva", "Eva")
+    body = {**termin("t1", max_["mitarbeiter_id"]), "mitarbeiter_ids": [eva["mitarbeiter_id"]],
+            "kunde": "Mustermann", "ort": "Hauptstr. 1", "telefon": "0123", "status": "in_arbeit"}
+    saved = client.post("/api/termine", headers=h_max, json=body).json()
+    # the responsible employee is always part of the list, first
+    assert saved["mitarbeiter_ids"] == [max_["mitarbeiter_id"], eva["mitarbeiter_id"]]
+    assert client.get("/api/termine").json()[0]["kunde"] == "Mustermann"
+    # old appointments without the new fields still load with defaults
+    legacy = client.post("/api/termine", headers=h_max, json=termin("t2", max_["mitarbeiter_id"])).json()
+    assert legacy["mitarbeiter_ids"] == [max_["mitarbeiter_id"]] and legacy["status"] == "geplant"
+
+
+def test_deleting_user_removes_them_from_shared_appointments(client, admin, make_user):
+    h_max, max_ = make_user("max", "Max")
+    _, eva = make_user("eva", "Eva")
+    client.post("/api/termine", headers=h_max, json={**termin("t1", max_["mitarbeiter_id"]),
+                                                       "mitarbeiter_ids": [eva["mitarbeiter_id"]]})
+    assert client.delete(f"/api/users/{eva['id']}", headers=admin).status_code == 200
+    assert client.get("/api/termine").json()[0]["mitarbeiter_ids"] == [max_["mitarbeiter_id"]]
