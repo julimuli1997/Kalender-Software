@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { loginApi, fetchMeApi, setAuthToken, AUTH_EXPIRED_EVENT } from '../utils/api';
+import { loginApi, logoutApi, fetchMeApi, setAuthToken, AUTH_EXPIRED_EVENT } from '../utils/api';
 import { AuthContext } from '../hooks/useAuth';
 
 export function AuthProvider({ children }) {
@@ -25,6 +25,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    logoutApi(); // reads the token synchronously, so clearing it right after is safe
     setAuthToken(null);
     setUser(null);
   };

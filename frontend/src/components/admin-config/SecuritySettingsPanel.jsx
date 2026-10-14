@@ -85,7 +85,7 @@ function SecuritySettingsPanel() {
         <ul className="cfg-locked">
           {locked.map((l) => (
             <li key={l.username}>
-              @{l.username} <span className="cfg-hint">(noch ~{l.minutes_left} Min.)</span>
+              @{l.username} <span className="cfg-hint">(von {l.ip}, noch ~{l.minutes_left} Min.)</span>
               <button className="cfg-btn" onClick={() => unlock(l.username)}>Entsperren</button>
             </li>
           ))}

@@ -8,19 +8,22 @@ from core.roles import ADMIN
 from core.security_settings import get_security_settings
 SESSIONS = {}  # token -> user_dict
 
-def hash_password(password: str, salt: Optional[str] = None) -> tuple[str, str]:
+PBKDF2_ITERATIONS = 600_000  # OWASP recommendation for PBKDF2-SHA256
+LEGACY_ITERATIONS = 100_000  # users saved before the "iterations" field existed
+
+def hash_password(password: str, salt: Optional[str] = None, iterations: Optional[int] = None) -> tuple[str, str]:
     if not salt:
         salt = os.urandom(16).hex()
     hashed = hashlib.pbkdf2_hmac(
         'sha256',
         password.encode('utf-8'),
         bytes.fromhex(salt),
-        100000
+        iterations or PBKDF2_ITERATIONS,
     ).hex()
     return hashed, salt
 
-def verify_password(password: str, hashed: str, salt: str) -> bool:
-    new_hash, _ = hash_password(password, salt)
+def verify_password(password: str, hashed: str, salt: str, iterations: int) -> bool:
+    new_hash, _ = hash_password(password, salt, iterations)
     return secrets.compare_digest(new_hash, hashed)
 
 def create_session(user_dict: dict) -> str:

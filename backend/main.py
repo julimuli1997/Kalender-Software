@@ -70,17 +70,20 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
 
 # Serve React Frontend Static Files (SPA fallback routing)
-if os.path.exists("dist"):
-    if os.path.exists("dist/assets"):
-        app.mount("/assets", StaticFiles(directory="dist/assets"), name="assets")
+if os.path.exists("dist/assets"):
+    app.mount("/assets", StaticFiles(directory="dist/assets"), name="assets")
 
-    @app.get("/{full_path:path}")
-    async def serve_spa(full_path: str):
-        # realpath + prefix check: "..%2F" or an absolute path must not leave dist/
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    if not os.path.isfile("dist/index.html"):
+        raise HTTPException(status_code=404)
+    # Reject odd paths before touching the disk: on Windows, merely resolving "\\host\share" or
+    # "//host/share" opens an SMB connection. Then realpath + prefix check keeps "..%2F" inside dist/.
+    if not full_path.startswith("/") and not any(c in full_path for c in "\\:\x00"):
         file_path = os.path.realpath(os.path.join("dist", full_path))
         if file_path.startswith(os.path.realpath("dist") + os.sep) and os.path.isfile(file_path):
             return FileResponse(file_path)
-        return FileResponse("dist/index.html")
+    return FileResponse("dist/index.html")
 
 # PyInstaller / Server execution runner
 import uvicorn

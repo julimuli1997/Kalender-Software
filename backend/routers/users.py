@@ -5,14 +5,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from core.auth import hash_password, require_admin, revoke_user_sessions
+from core.auth import require_admin, revoke_user_sessions
 from core.database import db_lock, read_list, write_json
 from core.models import UserCreate
 from core.password_policy import enforce_password_policy
 from core.paths import MITARBEITER_FILE, TERMINE_FILE
 from core.roles import ADMIN, Role
-from core.security_settings import get_security_settings
-from core.user_store import load_users, save_users, find_user, public_user, admin_count
+from core.user_store import load_users, save_users, find_user, public_user, admin_count, set_password
 from core.websocket import manager
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -34,30 +33,31 @@ def get_users(admin: dict = Depends(require_admin)):
 
 @router.post("")
 async def create_user(u: UserCreate, admin: dict = Depends(require_admin)):
+    name = u.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Name darf nicht leer sein")
     enforce_password_policy(u.password)
-    hashed, salt = hash_password(u.password)
     user_id = uuid.uuid4().hex
+    new_user = {
+        "id": user_id,
+        "username": u.username,
+        "role": u.role,
+        "name": name,
+        "mitarbeiter_id": user_id,
+    }
+    set_password(new_user, u.password)  # slow on purpose, so outside the lock
 
     with db_lock:
         users = load_users()
         if any(x.get("username", "").lower() == u.username.lower() for x in users):
             raise HTTPException(status_code=400, detail="Benutzername existiert bereits")
 
-        new_user = {
-            "id": user_id,
-            "username": u.username,
-            "password_hash": hashed,
-            "salt": salt,
-            "role": u.role,
-            "name": u.name,
-            "mitarbeiter_id": user_id,
-        }
         users.append(new_user)
         save_users(users)
 
         # Sync with mitarbeiter.json so calendar/employee routes match automatically
         mitarbeiter_list = read_list(MITARBEITER_FILE)
-        mitarbeiter_list.append({"id": user_id, "name": u.name})
+        mitarbeiter_list.append({"id": user_id, "name": name})
         write_json(MITARBEITER_FILE, mitarbeiter_list)
 
     await manager.broadcast("update")
@@ -100,10 +100,8 @@ def reset_password(user_id: str, body: PasswordReset, admin: dict = Depends(requ
     with db_lock:
         users = load_users()
         user = find_user(users, user_id)
-        user["password_hash"], user["salt"] = hash_password(body.new_password)
-        # The admin knows this password, so the user must replace it - unless self-change is
-        # switched off, where the lock could never be lifted.
-        user["must_change_password"] = user.get("role") == ADMIN or get_security_settings()["allow_self_password_change"]
+        set_password(user, body.new_password)
+        user["must_change_password"] = True  # the admin knows this password, so the user must replace it
         save_users(users)
     # Own session survives; every other session of that user is ended.
     revoke_user_sessions(user["id"], except_token=admin.get("token") if str(user["id"]) == str(admin["id"]) else None)

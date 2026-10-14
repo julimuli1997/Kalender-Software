@@ -55,6 +55,9 @@ const succeeded = (promise) => promise.then(() => true, () => false);
 export const loginApi = (username, password) =>
   request('/auth/login', { method: 'POST', body: { username, password }, fallbackError: 'Login fehlgeschlagen' });
 
+// Ends the session on the server too; a failure (e.g. already expired) changes nothing for the user.
+export const logoutApi = () => request('/auth/logout', { method: 'POST' }).catch(() => {});
+
 export async function fetchMeApi() {
   if (!getAuthToken()) return null;
   try {

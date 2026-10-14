@@ -14,6 +14,7 @@ from core import auth, login_guard  # noqa: E402
 def client(tmp_path, monkeypatch):
     """App running against an empty, throw-away data directory."""
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(auth, "PBKDF2_ITERATIONS", 1000)  # keep the suite fast; same code path
     auth.SESSIONS.clear()
     login_guard._STATE.clear()
     with TestClient(main.app) as c:

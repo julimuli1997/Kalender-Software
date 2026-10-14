@@ -1,6 +1,6 @@
-import pytest
-
-
+from core import login_guard
+from core.auth import hash_password
+from core.database import read_list, write_json
 from tests.conftest import auth_header, login
 
 
@@ -82,22 +82,64 @@ def test_last_admin_and_main_admin_are_protected(client, admin):
     assert client.delete("/api/users/gibts-nicht", headers=admin).status_code == 404
 
 
-def test_reset_password_forces_a_change_unless_self_change_is_off(client, admin, make_user):
+def test_reset_password_forces_a_change_that_stays_possible(client, admin, make_user):
     _, user = make_user("max", "Max")
-    reset = lambda: client.post(f"/api/users/{user['id']}/reset-password", headers=admin, json={"new_password": "Neu12345"})
-    reset()
-    assert login(client, "max", "Neu12345").json()["user"]["must_change_password"] is True
+    r = client.post(f"/api/users/{user['id']}/reset-password", headers=admin, json={"new_password": "Neu12345"})
+    assert r.status_code == 200
+    # self-change switched off after the reset must not trap the user on the change screen
+    assert client.put("/api/admin/security", headers=admin, json={"allow_self_password_change": False}).status_code == 200
+    r = login(client, "max", "Neu12345").json()
+    assert r["user"]["must_change_password"] is True
+    h = auth_header(r["token"])
+    r = client.post("/api/account/change-password", headers=h,
+                    json={"current_password": "Neu12345", "new_password": "Eigen1234"})
+    assert r.status_code == 200, r.text
+    # once changed, the admin setting applies again
+    r = client.post("/api/account/change-password", headers=h,
+                    json={"current_password": "Eigen1234", "new_password": "Eigen5678"})
+    assert r.status_code == 403
 
-    client.put("/api/admin/security", headers=admin, json={"allow_self_password_change": False})
-    reset()
-    assert login(client, "max", "Neu12345").json()["user"]["must_change_password"] is False
 
-
-def test_spa_route_does_not_serve_files_outside_dist(client, tmp_path):
-    if not any(getattr(r, "path", "") == "/{full_path:path}" for r in client.app.routes):
-        pytest.skip("SPA route only exists when backend/dist was built")
-    (tmp_path / "dist").mkdir()
+def test_spa_route_serves_dist_files_and_nothing_outside(client, tmp_path):
+    assert client.get("/kalender").status_code == 404  # no build yet
+    (tmp_path / "dist" / "sub").mkdir(parents=True)
     (tmp_path / "dist" / "index.html").write_text("SPA")
+    (tmp_path / "dist" / "favicon.svg").write_text("ICON")
+    (tmp_path / "dist" / "sub" / "x.txt").write_text("NESTED")
+    (tmp_path / "dist-evil").mkdir()
+    (tmp_path / "dist-evil" / "s.txt").write_text("SECRET")
     (tmp_path / "users.json").write_text("SECRET")
-    for path in ("/..%2Fusers.json", f"/{str(tmp_path / 'users.json').replace('/', '%2F')}"):
-        assert client.get(path).text == "SPA"
+
+    assert client.get("/favicon.svg").text == "ICON"
+    assert client.get("/sub/x.txt").text == "NESTED"
+    assert client.get("/kalender").text == "SPA"
+    for path in ("/..%2Fusers.json", "/..%2Fdist-evil%2Fs.txt", "/sub/..%2F..%2Fusers.json",
+                 f"/{str(tmp_path / 'users.json').replace('/', '%2F')}",
+                 "/..%5Cusers.json", "/%5C%5Chost%5Cshare%5Cx", "///host/share/x", "/C:users.json", "/a%00b"):
+        r = client.get(path)
+        assert (r.status_code, r.text) == (200, "SPA"), path
+
+
+def test_lockout_is_per_address_so_others_cannot_lock_out_the_owner(client, admin):
+    for _ in range(5):
+        login_guard.register_failure("admin", "10.0.0.66")  # someone else guessing
+    assert login(client, "admin", "Sicher123").status_code == 200  # owner on another machine
+    assert [l["username"] for l in client.get("/api/admin/security/locked", headers=admin).json()] == ["admin"]
+    assert client.post("/api/admin/security/unlock/admin", headers=admin).status_code == 200
+    assert client.get("/api/admin/security/locked", headers=admin).json() == []
+
+
+def test_old_password_hashes_are_upgraded_on_login(client):
+    hashed, salt = hash_password("Alt12345", iterations=100_000)
+    write_json("users.json", [{"id": "u1", "username": "old", "role": "mitarbeiter", "name": "Old",
+                               "mitarbeiter_id": "u1", "password_hash": hashed, "salt": salt}])
+    assert login(client, "old", "Alt12345").status_code == 200
+    [user] = read_list("users.json")
+    assert user["iterations"] == 1000 and user["password_hash"] != hashed
+    assert login(client, "old", "Alt12345").status_code == 200
+
+
+def test_user_name_must_not_be_blank(client, admin):
+    r = client.post("/api/users", headers=admin,
+                    json={"username": "x", "password": "Passwort1", "name": "   ", "role": "mitarbeiter"})
+    assert r.status_code == 400

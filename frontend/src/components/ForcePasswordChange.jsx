@@ -9,7 +9,7 @@ function ForcePasswordChange() {
   return (
     <div style={{ maxWidth: '440px', margin: '3rem auto' }}>
       <p className="cfg-hint">
-        Für <strong>{user.username}</strong> ist noch das Standard-Passwort gesetzt.
+        Für <strong>{user.username}</strong> ist ein Passwort gesetzt, das du nicht selbst gewählt hast (Standard-Passwort oder vom Administrator zurückgesetzt).
         Bitte vergib jetzt ein neues Passwort, bevor du fortfährst.
       </p>
       <MyPasswordPanel onSuccess={() => setUser({ ...user, must_change_password: false })} />

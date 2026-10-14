@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AUTH_EXPIRED_EVENT, request, setAuthToken, createTerminApi } from '../utils/api';
+import { AUTH_EXPIRED_EVENT, request, setAuthToken, createTerminApi, logoutApi } from '../utils/api';
 
 const respond = (status, body) => vi.fn().mockResolvedValue({
   ok: status < 400, status, json: () => Promise.resolve(body),
@@ -41,5 +41,17 @@ describe('request', () => {
     expect(await createTerminApi({})).toBe(false);
     vi.stubGlobal('fetch', respond(200, {}));
     expect(await createTerminApi({})).toBe(true);
+  });
+});
+
+describe('logoutApi', () => {
+  it('ends the session on the server and never throws', async () => {
+    setAuthToken('abc');
+    const fetchMock = respond(401, { detail: 'Sitzung abgelaufen' });
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(logoutApi()).resolves.toBeUndefined();
+    const [url, opts] = fetchMock.mock.calls[0];
+    expect(url).toMatch(/\/api\/auth\/logout$/);
+    expect(opts).toMatchObject({ method: 'POST', headers: { Authorization: 'Bearer abc' } });
   });
 });
