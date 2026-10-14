@@ -25,6 +25,8 @@ async def create_termin(t: Termin, user: dict = Depends(get_current_user)):
     ensure_can_edit(user, t.mitarbeiter_id, "erstellen")
     with db_lock:
         data = read_list(TERMINE_FILE)
+        if any(str(item.get("id")) == t.id for item in data):
+            raise HTTPException(status_code=400, detail="Termin-ID existiert bereits")
         data.append(t.model_dump())
         write_json(TERMINE_FILE, data)
     await manager.broadcast("update")
@@ -38,10 +40,10 @@ async def update_termin(t_id: str, t: Termin, user: dict = Depends(get_current_u
         index = _index_of(data, t_id)
         ensure_can_edit(user, data[index].get("mitarbeiter_id"), "bearbeiten")  # current owner
         ensure_can_edit(user, t.mitarbeiter_id, "bearbeiten")                   # new owner
-        data[index] = t.model_dump()
+        data[index] = {**t.model_dump(), "id": data[index]["id"]}  # the URL decides the id, not the body
         write_json(TERMINE_FILE, data)
     await manager.broadcast("update")
-    return t
+    return data[index]
 
 
 @router.delete("/{t_id}")

@@ -1,3 +1,6 @@
+import pytest
+
+
 from tests.conftest import auth_header, login
 
 
@@ -77,3 +80,24 @@ def test_last_admin_and_main_admin_are_protected(client, admin):
     assert client.put(f"/api/users/{me['id']}", headers=admin, json={"role": "mitarbeiter"}).status_code == 400
     assert client.delete(f"/api/users/{me['id']}", headers=admin).status_code == 400
     assert client.delete("/api/users/gibts-nicht", headers=admin).status_code == 404
+
+
+def test_reset_password_forces_a_change_unless_self_change_is_off(client, admin, make_user):
+    _, user = make_user("max", "Max")
+    reset = lambda: client.post(f"/api/users/{user['id']}/reset-password", headers=admin, json={"new_password": "Neu12345"})
+    reset()
+    assert login(client, "max", "Neu12345").json()["user"]["must_change_password"] is True
+
+    client.put("/api/admin/security", headers=admin, json={"allow_self_password_change": False})
+    reset()
+    assert login(client, "max", "Neu12345").json()["user"]["must_change_password"] is False
+
+
+def test_spa_route_does_not_serve_files_outside_dist(client, tmp_path):
+    if not any(getattr(r, "path", "") == "/{full_path:path}" for r in client.app.routes):
+        pytest.skip("SPA route only exists when backend/dist was built")
+    (tmp_path / "dist").mkdir()
+    (tmp_path / "dist" / "index.html").write_text("SPA")
+    (tmp_path / "users.json").write_text("SECRET")
+    for path in ("/..%2Fusers.json", f"/{str(tmp_path / 'users.json').replace('/', '%2F')}"):
+        assert client.get(path).text == "SPA"

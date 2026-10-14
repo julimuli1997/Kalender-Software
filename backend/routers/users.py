@@ -11,6 +11,7 @@ from core.models import UserCreate
 from core.password_policy import enforce_password_policy
 from core.paths import MITARBEITER_FILE, TERMINE_FILE
 from core.roles import ADMIN, Role
+from core.security_settings import get_security_settings
 from core.user_store import load_users, save_users, find_user, public_user, admin_count
 from core.websocket import manager
 
@@ -100,6 +101,9 @@ def reset_password(user_id: str, body: PasswordReset, admin: dict = Depends(requ
         users = load_users()
         user = find_user(users, user_id)
         user["password_hash"], user["salt"] = hash_password(body.new_password)
+        # The admin knows this password, so the user must replace it - unless self-change is
+        # switched off, where the lock could never be lifted.
+        user["must_change_password"] = user.get("role") == ADMIN or get_security_settings()["allow_self_password_change"]
         save_users(users)
     # Own session survives; every other session of that user is ended.
     revoke_user_sessions(user["id"], except_token=admin.get("token") if str(user["id"]) == str(admin["id"]) else None)

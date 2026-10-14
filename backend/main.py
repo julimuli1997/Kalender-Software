@@ -76,8 +76,9 @@ if os.path.exists("dist"):
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
-        file_path = os.path.join("dist", full_path)
-        if full_path and os.path.isfile(file_path):
+        # realpath + prefix check: "..%2F" or an absolute path must not leave dist/
+        file_path = os.path.realpath(os.path.join("dist", full_path))
+        if file_path.startswith(os.path.realpath("dist") + os.sep) and os.path.isfile(file_path):
             return FileResponse(file_path)
         return FileResponse("dist/index.html")
 

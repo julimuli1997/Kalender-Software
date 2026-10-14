@@ -76,3 +76,12 @@ def test_deleting_user_removes_them_from_shared_appointments(client, admin, make
                                                        "mitarbeiter_ids": [eva["mitarbeiter_id"]]})
     assert client.delete(f"/api/users/{eva['id']}", headers=admin).status_code == 200
     assert client.get("/api/termine").json()[0]["mitarbeiter_ids"] == [max_["mitarbeiter_id"]]
+
+
+def test_appointment_ids_cannot_be_duplicated_or_changed(client, admin, make_user):
+    h, user = make_user()
+    mid = user["mitarbeiter_id"]
+    assert client.post("/api/termine", headers=h, json=termin("t1", mid)).status_code == 200
+    assert client.post("/api/termine", headers=h, json=termin("t1", mid)).status_code == 400
+    assert client.put("/api/termine/t1", headers=h, json=termin("other", mid, "neu")).json()["id"] == "t1"
+    assert [t["id"] for t in client.get("/api/termine").json()] == ["t1"]

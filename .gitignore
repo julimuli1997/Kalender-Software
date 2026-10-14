@@ -7,6 +7,9 @@ venv/
 __pycache__/
 *.pyc
 
+# Graphify
+graphify-out
+
 # Build output (frontend build is copied to backend/dist, see deploy/README.md)
 dist/
 dist-exe/
